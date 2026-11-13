@@ -27,6 +27,7 @@
   "cash_yield_annual": 0.015,
   "strategy_start": "2026-01-01",
   "stop_loss_pct": 0.08,
+  "skip_limit_up_buys": true,
   "lot_size": 100,
   "maximum_single_position": 0.1,
   "weights": {

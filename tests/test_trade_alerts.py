@@ -11,19 +11,22 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 from stock_selection.capital import run_capital_backtest
 from stock_selection.alerts import build_trade_alert, format_trade_alert
+from stock_selection.engine import SelectionConfig, StockSelector, load_bars
 import daily_breadth_report
+import csv
 
 
 class FixtureSelector:
-    def __init__(self, prices, rebalance=20, breadth=1.0):
+    def __init__(self, prices, rebalance=20, breadth=1.0, limit_up=()):
         self.calendar = [date(2026, 1, 5) + timedelta(days=i) for i in range(len(prices))]
+        self.limit_up = set(limit_up)
         self.by_date = {day: {'AAA': SimpleNamespace(close=price)}
                         for day, price in zip(self.calendar, prices)}
         self.config = SimpleNamespace(initial_capital=100000, maximum_equity_exposure=.4,
                                       maximum_single_position=.1, lot_size=100,
                                       cash_yield_annual=.015, transaction_cost_rate=.0015,
                                       rebalance_days=rebalance, minimum_market_breadth=.4,
-                                      stop_loss_pct=.08)
+                                      stop_loss_pct=.08, skip_limit_up_buys=True)
         self.breadth = breadth
 
     def market_breadth(self, day):
@@ -31,6 +34,9 @@ class FixtureSelector:
 
     def select(self, day):
         return [SimpleNamespace(symbol='AAA')]
+
+    def is_limit_up(self, symbol, day):
+        return symbol in self.limit_up
 
 
 class TradeAlertTests(unittest.TestCase):
@@ -82,6 +88,14 @@ class TradeAlertTests(unittest.TestCase):
         self.assertIn('预计 1000 股', message)
         self.assertNotIn('开盘', message)
 
+    def test_limit_up_signal_is_not_reported_as_buy(self):
+        result, alert = self.alert(FixtureSelector([10, 10], limit_up={'AAA'}), 0)
+        self.assertEqual(result.pending_limit_up_symbols, ['AAA'])
+        self.assertEqual(alert['orders'], [])
+        self.assertEqual(alert['skipped_limit_up'], ['AAA'])
+        _, message = format_trade_alert(alert)
+        self.assertIn('涨停', message)
+
     def test_historical_send_rejected_before_network(self):
         with patch.object(sys, 'argv', ['report', '--send', '--date', '2000-01-01']), \
              patch.object(daily_breadth_report, 'update_store') as update:
@@ -108,6 +122,50 @@ class TradeAlertTests(unittest.TestCase):
             with patch.object(daily_breadth_report, 'fetch_symbol', side_effect=fetch):
                 daily_breadth_report.update_store(base, store)
             self.assertEqual(len(daily_breadth_report.read_rows(store)), 4)
+
+    def _write_limit_bars(self, path, days=162, jump_index=None, rate=0.10):
+        with path.open('w', encoding='utf-8', newline='') as handle:
+            writer = csv.writer(handle)
+            writer.writerow(['date', 'symbol', 'close', 'volume', 'listing_days', 'is_st', 'suspended'])
+            start = date(2024, 1, 1)
+            for i in range(days):
+                price = 10.0 * (1.0 + rate) if i == jump_index else 10.0
+                writer.writerow([start + timedelta(days=i), '600000.SH', price, 5_000_000, 300 + i, 0, 0])
+
+    def _limit_selector(self, path):
+        config = SelectionConfig(top_n=1, minimum_history=121, minimum_average_turnover=1.0,
+                                 minimum_market_breadth=0.0, rebalance_days=160)
+        return StockSelector(load_bars(path), config)
+
+    def test_limit_up_on_execution_day_blocks_buy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'bars.csv'
+            self._write_limit_bars(path, jump_index=161)
+            selector = self._limit_selector(path)
+            result = run_capital_backtest(selector, selector.calendar[0], selector.calendar[-1])
+            self.assertEqual(result.final_positions, {})
+            self.assertEqual([row['symbol'] for row in result.limit_up_skips], ['600000.SH'])
+            self.assertEqual(result.limit_up_skips[0]['reason'], 'limit_up')
+
+    def test_limit_up_on_signal_day_blocks_new_position(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'bars.csv'
+            self._write_limit_bars(path, jump_index=160)
+            selector = self._limit_selector(path)
+            result = run_capital_backtest(selector, selector.calendar[0], selector.calendar[160])
+            self.assertEqual(result.pending_limit_up_symbols, ['600000.SH'])
+            self.assertEqual(result.pending_symbols, [])
+            self.assertEqual(result.final_positions, {})
+            self.assertEqual(result.trades, [])
+
+    def test_flat_market_still_executes_buy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'bars.csv'
+            self._write_limit_bars(path)
+            selector = self._limit_selector(path)
+            result = run_capital_backtest(selector, selector.calendar[0], selector.calendar[-1])
+            self.assertEqual(list(result.final_positions), ['600000.SH'])
+            self.assertEqual(result.limit_up_skips, [])
 
 
 if __name__ == '__main__':

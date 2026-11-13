@@ -95,6 +95,46 @@ class StockSelectionTest(unittest.TestCase):
                 self.assertEqual(order["shares"] % 100, 0)
                 self.assertLessEqual(order["amount"], 6_000)
 
+    def _write_limit_fixture(self, path: Path, days: int, jump_index: int, rate: float = 0.10) -> None:
+        with path.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.writer(handle)
+            writer.writerow(["date", "symbol", "close", "volume", "listing_days", "is_st", "suspended"])
+            start = date(2024, 1, 1)
+            for i in range(days):
+                price = 10.0 * (1.0 + rate) if i == jump_index else 10.0
+                writer.writerow([start + timedelta(days=i), "600000.SH", price, 5_000_000, 300 + i, 0, 0])
+
+    def test_limit_up_is_detected_from_adjusted_close(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bars.csv"
+            self._write_limit_fixture(path, 162, jump_index=161)
+            selector = StockSelector(load_bars(path), SelectionConfig(minimum_average_turnover=1.0))
+            self.assertTrue(selector.is_limit_up("600000.SH", selector.calendar[161]))
+            self.assertFalse(selector.is_limit_up("600000.SH", selector.calendar[160]))
+
+    def test_order_plan_skips_limit_up_buys(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bars.csv"
+            self._write_limit_fixture(path, 162, jump_index=161)
+            config = SelectionConfig(top_n=1, minimum_average_turnover=1.0, minimum_market_breadth=0.0)
+            selector = StockSelector(load_bars(path), config)
+            plan = selector.build_order_plan(selector.calendar[161], 100_000)
+            self.assertTrue(plan["risk_on"])
+            self.assertEqual(plan["orders"], [])
+            self.assertEqual(plan["skipped_limit_up"], ["600000.SH"])
+            self.assertEqual(plan["invested"], 0.0)
+
+    def test_order_plan_can_disable_limit_up_filter(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bars.csv"
+            self._write_limit_fixture(path, 162, jump_index=161)
+            config = SelectionConfig(top_n=1, minimum_average_turnover=1.0,
+                                     minimum_market_breadth=0.0, skip_limit_up_buys=False)
+            selector = StockSelector(load_bars(path), config)
+            plan = selector.build_order_plan(selector.calendar[161], 100_000)
+            self.assertEqual([order["symbol"] for order in plan["orders"]], ["600000.SH"])
+            self.assertEqual(plan["skipped_limit_up"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

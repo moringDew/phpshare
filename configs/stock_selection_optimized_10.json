@@ -25,6 +25,7 @@
   "maximum_equity_exposure": 0.45,
   "initial_capital": 100000.0,
   "cash_yield_annual": 0.015,
+  "skip_limit_up_buys": true,
   "lot_size": 100,
   "maximum_single_position": 0.06075,
   "weights": {

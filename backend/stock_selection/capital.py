@@ -26,6 +26,8 @@ class CapitalBacktestResult:
     pending_symbols: Optional[List[str]] = None
     pending_stop_symbols: List[str] = field(default_factory=list)
     average_cost: Dict[str, float] = field(default_factory=dict)
+    pending_limit_up_symbols: List[str] = field(default_factory=list)
+    limit_up_skips: List[Dict[str, object]] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, object]:
         return asdict(self)
@@ -79,9 +81,16 @@ def run_capital_backtest(
     stop_pending: Set[str] = set()
     pending_symbols: Optional[List[str]] = None
     pending_signal: Optional[date] = None
+    pending_limit_up_symbols: List[str] = []
+    limit_up_skips: List[Dict[str, object]] = []
+    skip_limit_up = getattr(config, "skip_limit_up_buys", True)
+    is_limit_up = getattr(selector, "is_limit_up", None)
     trades: List[Dict[str, object]] = []
     curve: List[Dict[str, object]] = []
     invested_days = 0
+
+    def blocked_by_limit_up(symbol: str, on_date: date) -> bool:
+        return bool(skip_limit_up and is_limit_up is not None and is_limit_up(symbol, on_date))
 
     def equity(on_date: date) -> float:
         return cash + sum(
@@ -149,6 +158,16 @@ def run_capital_backtest(
                 if new <= old:
                     continue
                 quantity = new - old
+                if blocked_by_limit_up(symbol, current_date):
+                    limit_up_skips.append({
+                        "date": current_date.isoformat(),
+                        "signal_date": pending_signal.isoformat(),
+                        "symbol": symbol,
+                        "shares": quantity,
+                        "price": selector.by_date[current_date][symbol].close,
+                        "reason": "limit_up",
+                    })
+                    continue
                 price = selector.by_date[current_date][symbol].close
                 gross = quantity * price
                 fee = gross * config.transaction_cost_rate
@@ -164,10 +183,16 @@ def run_capital_backtest(
                         "price": price, "fee": fee, "reason": "rebalance",
                     })
             pending_symbols = None
+            pending_limit_up_symbols = []
         if index % config.rebalance_days == 0:
             risk_on = selector.market_breadth(current_date) >= config.minimum_market_breadth
             picks = selector.select(current_date) if risk_on else []
-            pending_symbols = [item.symbol for item in picks]
+            blocked = [
+                item.symbol for item in picks
+                if item.symbol not in shares and blocked_by_limit_up(item.symbol, current_date)
+            ]
+            pending_limit_up_symbols = blocked
+            pending_symbols = [item.symbol for item in picks if item.symbol not in blocked]
             pending_signal = current_date
         elif config.stop_loss_pct and shares:
             for symbol in list(shares):
@@ -205,5 +230,7 @@ def run_capital_backtest(
         pending_symbols=pending_symbols,
         pending_stop_symbols=sorted(stop_pending),
         average_cost=dict(average_cost),
+        pending_limit_up_symbols=pending_limit_up_symbols,
+        limit_up_skips=limit_up_skips,
     )
 

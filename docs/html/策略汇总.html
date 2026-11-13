@@ -13,7 +13,7 @@ table.wide{white-space:nowrap;font-variant-numeric:tabular-nums}
 pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
 @media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
 @media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
-</style></head><body><div class="layout"><nav aria-label="目录"><strong>A 股选股策略汇总 · 目录</strong><a href="#section-1">1. 一句话概括</a><a href="#section-2">2. 策略框架</a><a href="#section-7">3. 当前配置</a><a href="#section-8">4. 当前状态（2026-11-13）</a><a href="#section-10">5. 回测表现对比</a><a href="#section-11">6. 关键结论与容易踩的坑</a><a href="#section-12">7. 每日报告与推送</a><a href="#section-13">8. 待定事项</a><a href="#section-14">9. 文件索引</a><a href="#section-15">10. 风险声明</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E7%AD%96%E7%95%A5%E6%B1%87%E6%80%BB.md">策略汇总.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">A 股选股策略汇总</h1>
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>A 股选股策略汇总 · 目录</strong><a href="#section-1">1. 一句话概括</a><a href="#section-2">2. 策略框架</a><a href="#section-7">3. 当前配置</a><a href="#section-8">4. 当前状态（2026-11-13）</a><a href="#section-10">5. 回测表现对比</a><a href="#section-11">6. 关键结论与容易踩的坑</a><a href="#section-12">7. 每日报告与推送</a><a href="#section-14">8. 待定事项</a><a href="#section-15">9. 文件索引</a><a href="#section-16">10. 风险声明</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E7%AD%96%E7%95%A5%E6%B1%87%E6%80%BB.md">策略汇总.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">A 股选股策略汇总</h1>
 <blockquote>更新时间：2026-11-13<br>数据截至：2026-11-13<br>用途：策略参数、当前状态、回测结论与待办事项的长期备忘</blockquote>
 <h2 id="section-1">1. 一句话概括</h2>
 <p>在 500 只流动性较好的沪深主板/创业板股票中，用多因子打分选前 N 名；用“市场广度”判断市场状态，广度低于门槛时空仓；每 20 个交易日调仓一次，单票和总仓位都有上限。</p>
@@ -65,6 +65,7 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <li><p>交易成本：单边 0.15%</p></li>
 <li><p>现金收益：年化 <strong>1.5%</strong>（<code>cash_yield_annual</code>，按 252 个交易日折算）</p></li>
 <li><p>个股止损：从成本跌破 <strong>-8%</strong>（<code>stop_loss_pct</code>），下一交易日卖出；卖出后等到下次调仓再重新评估</p></li>
+<li><p>涨停买入过滤（<code>skip_limit_up_buys</code>，默认开启）：信号日收盘涨停的<strong>新建仓</strong>不买；下一交易日收盘涨停的建仓/加仓也不买。已持有且仍入选的股票继续持有，不会因涨停被强制卖出</p></li>
 <li><p>每日检查广度，但<strong>只有个股止损会在非调仓日触发卖出</strong>；广度仍只在调仓日决定是否空仓</p></li>
 </ul>
 <h2 id="section-7">3. 当前配置</h2>
@@ -81,6 +82,7 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <tr><td style="text-align:left">策略起点</td><td style="text-align:right">2026-01-01</td><td style="text-align:right">2026-01-01</td></tr>
 <tr><td style="text-align:left">现金年化收益</td><td style="text-align:right">1.5%</td><td style="text-align:right">1.5%</td></tr>
 <tr><td style="text-align:left">个股止损</td><td style="text-align:right">-8%</td><td style="text-align:right">-8%</td></tr>
+<tr><td style="text-align:left">涨停买入过滤</td><td style="text-align:right">开启</td><td style="text-align:right">开启</td></tr>
 <tr><td style="text-align:left">配置文件</td><td style="text-align:right"><code>configs/stock_selection_optimized.json</code></td><td style="text-align:right"><code>configs/stock_selection.json</code></td></tr>
 </tbody></table></div>
 <p>10 只版本的旧配置已备份：</p>
@@ -95,17 +97,17 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <li><p>上次调仓：<strong>2026-11-04</strong>（广度 39.96% &lt; 40%，11-05 清仓）</p></li>
 <li><p>下次调仓：<strong>2026-12-02</strong>（还剩 13 个交易日）</p></li>
 <li><p>报告版 50%：空仓</p></li>
-<li><p>策略自 01-05 累计：<strong>+22.22%</strong>（最大回撤 10.23%）</p></li>
+<li><p>策略自 01-05 累计：<strong>+11.67%</strong>（最大回撤 2.91%；已启用涨停买入过滤）</p></li>
 </ul>
 <h3 id="section-9">当前持股</h3>
-<p><strong>空仓</strong>，现金 122,216 元。</p>
+<p><strong>空仓</strong>，现金 111,666 元。</p>
 <ul>
-<li><p>2026 年模拟盘共 52 笔成交，其中 11 笔为止损卖出</p></li>
-<li><p>已实现盈亏：+21,141.51 元</p></li>
-<li><p>手续费：713.49 元</p></li>
+<li><p>2026 年模拟盘共 32 笔成交，其中 7 笔为止损卖出</p></li>
+<li><p>已实现盈亏：+10,519.81 元</p></li>
+<li><p>手续费：441.19 元</p></li>
 </ul>
 <h2 id="section-10">5. 回测表现对比</h2>
-<p>数据截至 2026-11-13，100 股整手、单边 0.15% 成本。</p>
+<p>数据截至 2026-11-13，100 股整手、单边 0.15% 成本。以下均为<strong>启用涨停买入过滤后</strong>重跑的口径。</p>
 <div class="table-wrap"><table><thead><tr>
 <th>配置</th>
 <th>年化</th>
@@ -116,11 +118,12 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <th>2026 回撤</th>
 <th>交易数</th>
 </tr></thead><tbody>
-<tr><td style="text-align:left"><strong>5 只 / 40%</strong>（当前）</td><td style="text-align:right">21.64%</td><td style="text-align:right">13.05%</td><td style="text-align:right">59.1%</td><td style="text-align:right">1.6770</td><td style="text-align:right">32.85%</td><td style="text-align:right">10.45%</td><td style="text-align:right">52</td></tr>
-<tr><td style="text-align:left">10 只 / 45%（旧）</td><td style="text-align:right">24.37%</td><td style="text-align:right">13.27%</td><td style="text-align:right">72.7%</td><td style="text-align:right">1.7781</td><td style="text-align:right">19.67%</td><td style="text-align:right">5.04%</td><td style="text-align:right">89</td></tr>
-<tr><td style="text-align:left">5 只 / 45%（备选）</td><td style="text-align:right">24.27%</td><td style="text-align:right">14.67%</td><td style="text-align:right">59.1%</td><td style="text-align:right">1.7743</td><td style="text-align:right">—</td><td style="text-align:right">—</td><td style="text-align:right">—</td></tr>
+<tr><td style="text-align:left"><strong>5 只 / 40%</strong>（当前）</td><td style="text-align:right">18.33%</td><td style="text-align:right">11.62%</td><td style="text-align:right">59.1%</td><td style="text-align:right">1.5591</td><td style="text-align:right">11.67%</td><td style="text-align:right">2.91%</td><td style="text-align:right">32</td></tr>
+<tr><td style="text-align:left">10 只 / 45%（旧）</td><td style="text-align:right">18.54%</td><td style="text-align:right">11.84%</td><td style="text-align:right">72.7%</td><td style="text-align:right">1.5663</td><td style="text-align:right">6.57%</td><td style="text-align:right">4.40%</td><td style="text-align:right">60</td></tr>
+<tr><td style="text-align:left">5 只 / 45%（备选）</td><td style="text-align:right">—</td><td style="text-align:right">—</td><td style="text-align:right">—</td><td style="text-align:right">—</td><td style="text-align:right">—</td><td style="text-align:right">—</td><td style="text-align:right">未重跑</td></tr>
 </tbody></table></div>
-<p>上表是权重回测，不含个股止损。下面是加入 -8% 止损后的资本回测：</p>
+<p>上表前四列是 2024-02-08 起全周期权重回测，不含个股止损；后三列是 2026-01-01 起资本回测。</p>
+<p>下面是加入 -8% 止损后的全周期资本回测：</p>
 <div class="table-wrap"><table><thead><tr>
 <th>配置</th>
 <th>累计收益</th>
@@ -128,17 +131,18 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <th>交易数</th>
 <th>止损卖出</th>
 </tr></thead><tbody>
-<tr><td style="text-align:left"><strong>5 只 / 40%，含 -8% 止损</strong></td><td style="text-align:right"><strong>69.80%</strong></td><td style="text-align:right"><strong>11.74%</strong></td><td style="text-align:right">197</td><td style="text-align:right">35</td></tr>
-<tr><td style="text-align:left">5 只 / 40%，无止损</td><td style="text-align:right">63.46%</td><td style="text-align:right">13.82%</td><td style="text-align:right">197</td><td style="text-align:right">0</td></tr>
+<tr><td style="text-align:left"><strong>5 只 / 40%，含 -8% 止损</strong></td><td style="text-align:right"><strong>60.66%</strong></td><td style="text-align:right"><strong>11.28%</strong></td><td style="text-align:right">164</td><td style="text-align:right">28</td></tr>
+<tr><td style="text-align:left">5 只 / 40%，无止损</td><td style="text-align:right">55.22%</td><td style="text-align:right">11.94%</td><td style="text-align:right">164</td><td style="text-align:right">0</td></tr>
 </tbody></table></div>
 <p>要点：</p>
 <ul>
-<li><p>以上已计入 <strong>1.5% 年化现金收益</strong>（原 0% 口径下，5 只 / 40% 年化为 20.29%、回撤 13.50%）。</p></li>
-<li><p>策略自 2026-01-05 的模拟：<strong>+22.22%</strong>，最大回撤 10.23%（52 笔成交，11 笔止损；截至 11-13）。</p></li>
-<li><p>每日广度清仓的回测反而更差（累计 45.28%、回撤 16.90%），已否决；只保留个股止损。</p></li>
-<li><p>5 只 / 45% 在 1.5% 现金收益下回撤 <strong>14.67%</strong>，刚好过 15% 线，但缓冲只有 0.33pp；40% 档缓冲 1.95pp，所以仍选 40%。</p></li>
-<li><p>5 只 / 40% 的 2026 年样本外收益更高（32.85%），但全周期胜率只有 59.1%，收益更集中、波动更大。</p></li>
-<li><p>10 只版本的胜率更高（72.7%），风险更分散；如果更看重稳定性，应回到 10 只。</p></li>
+<li><p>以上已计入 <strong>1.5% 年化现金收益</strong>。</p></li>
+<li><p>策略自 2026-01-05 的模拟：<strong>+11.67%</strong>，最大回撤 2.91%（32 笔成交，7 笔止损；截至 11-13）。</p></li>
+<li><p><strong>涨停过滤的影响很大</strong>：同一 5 只 / 40% 配置，排除涨停价成交后 2026 资本收益从 22.22% 降到 11.67%。原回测有相当一部分收益来自“涨停收盘仍能买入”的不现实假设。</p></li>
+<li><p>每日广度清仓在旧回测中反而更差，已否决；只保留个股止损。</p></li>
+<li><p>40% 档回撤缓冲仍优于 45% 档，因此维持 40% 总仓位上限。</p></li>
+<li><p>5 只版本的 2026 年权重回测为 15.99%，全周期胜率 59.1%，收益更集中、波动更大。</p></li>
+<li><p>10 只版本全周期胜率更高（72.7%），但 2026 资本收益只有 6.57%；如果更看重稳定性，仍可考虑 10 只。</p></li>
 </ul>
 <h2 id="section-11">6. 关键结论与容易踩的坑</h2>
 <ol>
@@ -149,7 +153,8 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <li><p><strong>5 只的集中度风险与止损效果</strong> 单票权重从 4.5% 提高到 8%，单只 -20% 对总资产的影响从约 -0.9% 放大到约 -1.6%。2026 年模拟盘共 11 笔止损，例如中国平安 1 月从 71.59 跌到 65.47 被止损，实际亏损 <strong>-632.56 元</strong>。</p></li>
 <li><p><strong>剩余 60% 现金</strong> 回测和日报现在按 <strong>1.5% 年化</strong> 计算现金收益（<code>cash_yield_annual</code>）。实盘对应货币基金/国债逆回购，需保证调仓日前可用。</p></li>
 <li><p><strong>市场广度是滞后指标</strong> 广度跌破 40% 时通常已经跌了一段，回升时也已经涨了一段。它的作用是规避“大部分股票下跌”的阶段，不是精准抄底逃顶。</p></li>
-<li><p><strong>每日广度清仓已被回测否决</strong> 任意一天广度 &lt;40% 就清仓、等到下次调仓再买，回测累计收益 45.28%、回撤 16.90%，比基线 66.68% / 13.70% 更差。原因是广度滞后，卖在低点又错过反弹。每日风控只保留个股 -8% 止损。</p></li>
+<li><p><strong>每日广度清仓已被回测否决</strong> 任意一天广度 &lt;40% 就清仓、等到下次调仓再买，回测表现比基线更差。原因是广度滞后，卖在低点又错过反弹。每日风控只保留个股 -8% 止损。</p></li>
+<li><p><strong>涨停价成交是回测里最容易高估的一环</strong> 涨停（尤其一字板）收盘时买不到，挂单只能排队。原回测按信号日/成交日收盘价直接买入，等于假设涨停也能成交。现已加入 <code>skip_limit_up_buys</code>：信号日或成交日收盘涨停的新建仓/加仓直接跳过。代价是回测收益明显下降，但更接近可执行结果。跌停无法卖出仍未建模。</p></li>
 </ol>
 <h2 id="section-12">7. 每日报告与推送</h2>
 <ul>
@@ -175,9 +180,27 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 </ul></li>
 <li><p>恢复推送：告诉我，或运行 <code>powershell -Command &quot;Enable-ScheduledTask -TaskName &#x27;QuantBreadthDaily&#x27;&quot;</code></p></li>
 </ul>
-<h2 id="section-13">8. 待定事项</h2>
+<h3 id="section-13">午间执行复核</h3>
+<ul>
+<li><p>脚本：<code>scripts/midday_check.py</code></p></li>
+<li><p>定时任务：<code>QuantMiddayCheck</code>，周一至周五 <strong>11:35</strong>（11:30 上午收盘后）</p></li>
+<li><p>作用：读取前一晚 <code>output/breadth_latest.json</code> 的买卖清单，用实时行情判断涨停/跌停/停牌</p>
+<ul>
+<li><p>买入涨停或停牌：跳过</p></li>
+<li><p>卖跌停：延后</p></li>
+<li><p>其余：标记可执行</p></li>
+</ul></li>
+<li><p>11:30–13:00 休市，不能成交；复核结果用于 13:00 开盘后的手动执行，不自动下单</p></li>
+<li><p>只在有买卖清单且行情为当天时推送；无清单、休市或行情不新鲜时不推送</p></li>
+<li><p>报告：<code>docs/md/午间复核/YYYY-MM-DD.md</code>、<code>docs/html/午间复核/YYYY-MM-DD.html</code></p></li>
+<li><p>结构化结果：<code>output/midday_check_YYYY-MM-DD.json</code></p></li>
+<li><p>日志：<code>output/logs/midday_check_YYYY-MM-DD.log</code></p></li>
+<li><p>注册任务：<code>powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register_midday_task.ps1</code></p></li>
+</ul>
+<h2 id="section-14">8. 待定事项</h2>
 <ul>
 <li><p><input type="checkbox" disabled checked> 每天 20:00 检查买卖信号，有信号时推送个人微信</p></li>
+<li><p><input type="checkbox" disabled checked> 增加 11:35 午间执行复核：检查次日清单标的的涨停/跌停/停牌状态</p></li>
 <li><p><input type="checkbox" disabled checked> 每日风控已加入：个股 -8% 止损（每日广度清仓已测试并否决）</p></li>
 <li><p><input type="checkbox" disabled checked> 策略起点已设为 2026-01-01（实际首个交易日 01-05）</p></li>
 <li><p><input type="checkbox" disabled checked> 现金收益假设已加入：年化 1.5%（可改为 1.0%～2.0%）</p></li>
@@ -187,7 +210,7 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <li><p><input type="checkbox" disabled checked> 增加手工真实持仓台账，按用户告知的实际成交更新，并附加到微信买卖提醒中核对；<a href="%E7%9C%9F%E5%AE%9E%E6%8C%81%E4%BB%93%E8%AF%B4%E6%98%8E.html">录入说明</a>。尚未连接券商自动同步。</p></li>
 <li><p><input type="checkbox" disabled> 5 只 vs 10 只的最终取舍：5 只收益更集中，10 只胜率更高、更稳</p></li>
 </ul>
-<h2 id="section-14">9. 文件索引</h2>
+<h2 id="section-15">9. 文件索引</h2>
 <div class="table-wrap"><table><thead><tr>
 <th>文件</th>
 <th>内容</th>
@@ -197,8 +220,11 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <tr><td style="text-align:left"><code>configs/stock_selection_optimized_10.json</code></td><td style="text-align:left">旧 10 只优化版备份</td></tr>
 <tr><td style="text-align:left"><code>configs/stock_selection_10.json</code></td><td style="text-align:left">旧 10 只报告版备份</td></tr>
 <tr><td style="text-align:left"><code>scripts/daily_breadth_report.py</code></td><td style="text-align:left">每日广度与持仓报告</td></tr>
-<tr><td style="text-align:left"><code>scripts/run_daily_breadth.ps1</code></td><td style="text-align:left">定时任务包装脚本</td></tr>
-<tr><td style="text-align:left"><code>scripts/register_daily_task.ps1</code></td><td style="text-align:left">注册 Windows 定时任务</td></tr>
+<tr><td style="text-align:left"><code>scripts/run_daily_breadth.ps1</code></td><td style="text-align:left">每日 20:00 定时任务包装脚本</td></tr>
+<tr><td style="text-align:left"><code>scripts/register_daily_task.ps1</code></td><td style="text-align:left">注册每日 20:00 Windows 定时任务</td></tr>
+<tr><td style="text-align:left"><code>scripts/midday_check.py</code></td><td style="text-align:left">午间执行复核（检查涨跌停/停牌）</td></tr>
+<tr><td style="text-align:left"><code>scripts/run_midday_check.ps1</code></td><td style="text-align:left">午间 11:35 定时任务包装脚本</td></tr>
+<tr><td style="text-align:left"><code>scripts/register_midday_task.ps1</code></td><td style="text-align:left">注册午间 11:35 Windows 定时任务</td></tr>
 <tr><td style="text-align:left"><code>scripts/optimize_topn_grid.py</code></td><td style="text-align:left">扩展持股数网格（未完成）</td></tr>
 <tr><td style="text-align:left"><code>scripts/export_trade_history.py</code></td><td style="text-align:left">交割历史单导出脚本</td></tr>
 <tr><td style="text-align:left"><code>scripts/backtest_daily_overlay.py</code></td><td style="text-align:left">每日广度/止损叠加回测</td></tr>
@@ -215,5 +241,5 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <tr><td style="text-align:left"><code>docs/md/选股报告_2026-11-13.md</code></td><td style="text-align:left">11-13 选股报告</td></tr>
 <tr><td style="text-align:left"><code>docs/html/市场广度报告_2026-10-08_2026-11-13.html</code></td><td style="text-align:left">10 月至今广度可视化报告</td></tr>
 </tbody></table></div>
-<h2 id="section-15">10. 风险声明</h2>
-<p>以上均为历史数据回测和量化规则信号，不构成投资建议。候选池按当前成交额选取，存在幸存者偏差；公开行情不能完整还原历史 ST 状态；回测未考虑真实成交滑点、涨跌停无法成交、分红税等因素。实盘前应使用正式数据源和独立样本外复核。</p></main></div></body></html>
+<h2 id="section-16">10. 风险声明</h2>
+<p>以上均为历史数据回测和量化规则信号，不构成投资建议。候选池按当前成交额选取，存在幸存者偏差；公开行情不能完整还原历史 ST 状态；买入已剔除信号日/成交日收盘涨停，但回测仍未考虑跌停无法卖出、真实成交滑点、分红税等因素。实盘前应使用正式数据源和独立样本外复核。</p></main></div></body></html>

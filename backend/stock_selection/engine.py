@@ -49,6 +49,7 @@ class SelectionConfig:
     cash_yield_annual: float = 0.0
     strategy_start: Optional[str] = None
     stop_loss_pct: Optional[float] = None
+    skip_limit_up_buys: bool = True
     lot_size: int = 100
     maximum_single_position: float = 0.06
     weights: Dict[str, float] = field(
@@ -183,6 +184,16 @@ def infer_board(symbol: str) -> Optional[str]:
     return None
 
 
+def limit_up_rate(symbol: str, is_st: bool = False) -> Optional[float]:
+    """Return the daily price-limit ratio; None for unsupported boards."""
+    board = infer_board(symbol)
+    if board == "main":
+        return 0.05 if is_st else 0.10
+    if board == "chinext":
+        return 0.20
+    return None
+
+
 class StockSelector:
     def __init__(self, bars: Sequence[Bar], config: Optional[SelectionConfig] = None):
         self.config = config or SelectionConfig()
@@ -196,6 +207,39 @@ class StockSelector:
             items.sort(key=lambda item: item.trade_date)
             self.index[symbol] = {bar.trade_date: i for i, bar in enumerate(items)}
         self.calendar = sorted(self.by_date)
+
+    def daily_change(self, symbol: str, on_date: date) -> Optional[float]:
+        """Adjusted close-to-close change, using the previous available bar."""
+        idx = self.index.get(symbol, {}).get(on_date)
+        if idx is None or idx < 1:
+            return None
+        items = self.by_symbol[symbol]
+        current, previous = items[idx], items[idx - 1]
+        previous_price = previous.close * previous.adj_factor
+        current_price = current.close * current.adj_factor
+        if previous_price <= 0:
+            return None
+        return current_price / previous_price - 1.0
+
+    def is_limit_up(self, symbol: str, on_date: date) -> bool:
+        """Whether the stock closed at its limit-up price on this date."""
+        idx = self.index.get(symbol, {}).get(on_date)
+        if idx is None or idx < 1:
+            return False
+        items = self.by_symbol[symbol]
+        current, previous = items[idx], items[idx - 1]
+        rate = limit_up_rate(symbol, current.is_st)
+        if rate is None or current.suspended:
+            return False
+        if current.adj_factor == previous.adj_factor:
+            # Same adjustment basis: exchange limit price, rounded half-up to 0.01.
+            limit_price = math.floor(previous.close * (1.0 + rate) * 100.0 + 0.5) / 100.0
+            return current.close >= limit_price - 0.005
+        change = self.daily_change(symbol, on_date)
+        if change is None:
+            return False
+        # Different adjustment basis: fall back to adjusted return with a 0.3pp margin.
+        return change >= rate - 0.003
 
     def strategy_start_index(self) -> int:
         floor = self.config.minimum_history - 1
@@ -315,12 +359,19 @@ class StockSelector:
                 "orders": [],
                 "invested": 0.0,
                 "cash": available_capital,
+                "skipped_limit_up": [],
             }
         selected = self.select(on_date)
+        skipped_limit_up = [
+            item.symbol for item in selected
+            if self.config.skip_limit_up_buys and self.is_limit_up(item.symbol, on_date)
+        ]
+        selected = [item for item in selected if item.symbol not in skipped_limit_up]
         if not selected:
             return {
                 "date": on_date.isoformat(), "capital": available_capital, "risk_on": risk_on,
                 "market_breadth": breadth, "orders": [], "invested": 0.0, "cash": available_capital,
+                "skipped_limit_up": skipped_limit_up,
             }
         total_limit = available_capital * self.config.maximum_equity_exposure
         single_limit = available_capital * self.config.maximum_single_position
@@ -362,6 +413,7 @@ class StockSelector:
             "orders": orders,
             "invested": invested,
             "cash": available_capital - invested,
+            "skipped_limit_up": skipped_limit_up,
         }
 
     def backtest(self) -> BacktestResult:
@@ -391,19 +443,38 @@ class StockSelector:
                 portfolio_return += cash_weight * self.config.cash_yield_annual / 252.0
                 equity *= 1.0 + portfolio_return
             if pending is not None:
-                equity_change = sum(abs(pending.get(s, 0.0) - active.get(s, 0.0)) for s in set(pending) | set(active))
-                cash_change = abs((1.0 - sum(pending.values())) - (1.0 - sum(active.values())))
+                execution = dict(pending)
+                if self.config.skip_limit_up_buys:
+                    for symbol in set(execution) | set(active):
+                        if (execution.get(symbol, 0.0) > active.get(symbol, 0.0)
+                                and self.is_limit_up(symbol, current_date)):
+                            execution[symbol] = active.get(symbol, 0.0)
+                    execution = {symbol: weight for symbol, weight in execution.items() if weight > 0}
+                equity_change = sum(abs(execution.get(s, 0.0) - active.get(s, 0.0)) for s in set(execution) | set(active))
+                cash_change = abs((1.0 - sum(execution.values())) - (1.0 - sum(active.values())))
                 turnover = 0.5 * (equity_change + cash_change)
                 equity *= max(0.0, 1.0 - turnover * self.config.transaction_cost_rate)
                 turnovers.append(turnover)
                 if period_start_equity is not None and active:
                     period_returns.append(equity / period_start_equity - 1.0)
                 period_start_equity = equity
-                active = pending
+                active = execution
                 pending = None
             if offset % self.config.rebalance_days == 0:
                 selected = self.select(current_date) if self.market_breadth(current_date) >= self.config.minimum_market_breadth else []
-                pending = ({item.symbol: self.config.maximum_equity_exposure / len(selected) for item in selected} if selected else {})
+                if selected and self.config.skip_limit_up_buys:
+                    selected = [
+                        item for item in selected
+                        if item.symbol in active or not self.is_limit_up(item.symbol, current_date)
+                    ]
+                if selected:
+                    weight = min(
+                        self.config.maximum_equity_exposure / len(selected),
+                        self.config.maximum_single_position,
+                    )
+                    pending = {item.symbol: weight for item in selected}
+                else:
+                    pending = {}
             curve.append((current_date, equity))
         if period_start_equity is not None and active:
             period_returns.append(equity / period_start_equity - 1.0)
