@@ -48,6 +48,7 @@ class SelectionConfig:
     initial_capital: float = 100_000.0
     cash_yield_annual: float = 0.0
     strategy_start: Optional[str] = None
+    stop_loss_pct: Optional[float] = None
     lot_size: int = 100
     maximum_single_position: float = 0.06
     weights: Dict[str, float] = field(

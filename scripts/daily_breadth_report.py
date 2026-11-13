@@ -542,8 +542,22 @@ def main() -> int:
     for item in portfolio.get("skipped", []):
         item["name"] = names.get(str(item["symbol"]), str(item["symbol"]))
 
+    stop_watch = []
+    if optimized.stop_loss_pct:
+        for holding in portfolio["holdings"]:
+            if float(holding["return_pct"]) <= -optimized.stop_loss_pct * 100.0:
+                stop_watch.append(holding)
+
     advice = daily_advice(portfolio, index, rebalance_indices, value, optimized_threshold, remaining)
+    if stop_watch:
+        advice = "触发止损：下一交易日卖出 {}；其余继续持有。".format(
+            "、".join("{} {}".format(holding["symbol"], holding["name"]) for holding in stop_watch))
+
     risk_notes: List[str] = []
+    for holding in stop_watch:
+        risk_notes.append("{} {} {:.1f}%，已跌破 -{:.0f}% 止损线".format(
+            holding["symbol"], holding["name"], float(holding["return_pct"]),
+            optimized.stop_loss_pct * 100))
     if value < optimized_threshold:
         risk_notes.append("广度已低于 {:.0f}% 门槛，下次调仓将转空仓".format(optimized_threshold * 100))
     elif value - optimized_threshold < 0.01:
@@ -619,6 +633,15 @@ def main() -> int:
         "advice": advice,
         "risk_notes": risk_notes,
         "strategy_start": optimized.strategy_start,
+        "stop_loss_pct": optimized.stop_loss_pct,
+        "stop_watch": [
+            {
+                "symbol": holding["symbol"],
+                "name": holding["name"],
+                "return_pct": round(float(holding["return_pct"]), 2),
+            }
+            for holding in stop_watch
+        ],
         "strategy_track": {
             "start_date": track_start.isoformat() if track_start else None,
             "total_return_pct": round(float(portfolio.get("return_pct", 0.0)), 2),

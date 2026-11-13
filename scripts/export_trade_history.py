@@ -106,6 +106,7 @@ def analyze(label: str, config: SelectionConfig, start: date, end: date, names: 
                 "fee": fee,
                 "cash_flow": cash_flow,
                 "realized_pnl": realized,
+                "reason": trade.get("reason", "rebalance"),
             }
         )
 
@@ -153,7 +154,7 @@ def analyze(label: str, config: SelectionConfig, start: date, end: date, names: 
 
 
 def write_trades_csv(path: Path, analysis: Analysis) -> None:
-    fields = ["date", "signal_date", "side", "symbol", "name", "shares", "price", "amount", "fee", "cash_flow", "realized_pnl"]
+    fields = ["date", "signal_date", "side", "reason", "symbol", "name", "shares", "price", "amount", "fee", "cash_flow", "realized_pnl"]
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
@@ -171,14 +172,15 @@ def write_trades_csv(path: Path, analysis: Analysis) -> None:
 def trades_table(analysis: Analysis, limit: Optional[int] = None) -> List[str]:
     rows = analysis.trades[-limit:] if limit else analysis.trades
     lines = [
-        "| 日期 | 方向 | 代码 | 名称 | 股数 | 成交价 | 成交额 | 手续费 | 现金流 | 已实现盈亏 |",
-        "|---|---|---|---|---:|---:|---:|---:|---:|---:|",
+        "| 日期 | 方向 | 原因 | 代码 | 名称 | 股数 | 成交价 | 成交额 | 手续费 | 现金流 | 已实现盈亏 |",
+        "|---|---|---|---|---|---:|---:|---:|---:|---:|---:|",
     ]
     for row in rows:
         realized = "—" if row["realized_pnl"] is None else "{:+,.2f}".format(float(row["realized_pnl"]))
+        reason = "止损" if row.get("reason") == "stop" else "调仓"
         lines.append(
-            "| {date} | {side} | {symbol} | {name} | {shares} | {price:.2f} | {amount:,.0f} | {fee:,.2f} | {cash:+,.0f} | {realized} |".format(
-                date=row["date"], side=row["side"], symbol=row["symbol"], name=row["name"],
+            "| {date} | {side} | {reason} | {symbol} | {name} | {shares} | {price:.2f} | {amount:,.0f} | {fee:,.2f} | {cash:+,.0f} | {realized} |".format(
+                date=row["date"], side=row["side"], reason=reason, symbol=row["symbol"], name=row["name"],
                 shares=row["shares"], price=float(row["price"]), amount=float(row["amount"]),
                 fee=float(row["fee"]), cash=float(row["cash_flow"]), realized=realized,
             )
@@ -234,6 +236,7 @@ def main() -> int:
         "| 项目 | 数值 |",
         "|---|---:|",
         "| 交易笔数 | {} |".format(len(strategy.trades)),
+        "| 止损卖出 | {} 笔 |".format(sum(1 for row in strategy.trades if row.get("reason") == "stop")),
         "| 手续费合计 | {:,.2f} 元 |".format(strategy.fees),
         "| 已实现盈亏 | {:+,.2f} 元 |".format(strategy.realized_pnl),
         "| 浮动盈亏 | {:+,.2f} 元 |".format(strategy.unrealized_pnl),
@@ -262,6 +265,7 @@ def main() -> int:
             "| 项目 | 数值 |",
             "|---|---:|",
             "| 交易笔数 | {} |".format(len(research.trades)),
+            "| 止损卖出 | {} 笔 |".format(sum(1 for row in research.trades if row.get("reason") == "stop")),
             "| 手续费合计 | {:,.2f} 元 |".format(research.fees),
             "| 已实现盈亏 | {:+,.2f} 元 |".format(research.realized_pnl),
             "| 浮动盈亏 | {:+,.2f} 元 |".format(research.unrealized_pnl),
@@ -294,6 +298,7 @@ def main() -> int:
         {
             "strategy": {
                 "trades": len(strategy.trades),
+                "stop_trades": sum(1 for row in strategy.trades if row.get("reason") == "stop"),
                 "fees": round(strategy.fees, 2),
                 "realized": round(strategy.realized_pnl, 2),
                 "unrealized": round(strategy.unrealized_pnl, 2),
@@ -302,6 +307,7 @@ def main() -> int:
             },
             "research": {
                 "trades": len(research.trades),
+                "stop_trades": sum(1 for row in research.trades if row.get("reason") == "stop"),
                 "fees": round(research.fees, 2),
                 "realized": round(research.realized_pnl, 2),
                 "unrealized": round(research.unrealized_pnl, 2),

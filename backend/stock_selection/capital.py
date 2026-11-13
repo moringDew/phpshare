@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from datetime import date
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Set
 
 from .engine import StockSelector
 
@@ -41,6 +41,8 @@ def run_capital_backtest(
         raise ValueError("指定区间没有行情")
     cash = float(capital)
     shares: Dict[str, int] = {}
+    average_cost: Dict[str, float] = {}
+    stop_pending: Set[str] = set()
     pending_symbols: Optional[List[str]] = None
     pending_signal: Optional[date] = None
     trades: List[Dict[str, object]] = []
@@ -87,6 +89,30 @@ def run_capital_backtest(
     for index, current_date in enumerate(calendar):
         if index > 0:
             cash *= 1.0 + daily_cash_rate
+        stopped_today: Set[str] = set()
+        if stop_pending:
+            for symbol in sorted(stop_pending):
+                if symbol not in shares:
+                    stop_pending.discard(symbol)
+                    continue
+                bar = selector.by_date.get(current_date, {}).get(symbol)
+                if bar is None:
+                    continue
+                quantity = shares[symbol]
+                price = bar.close
+                gross = quantity * price
+                fee = gross * config.transaction_cost_rate
+                cash += gross - fee
+                trades.append({
+                    "date": current_date.isoformat(),
+                    "signal_date": calendar[index - 1].isoformat() if index > 0 else current_date.isoformat(),
+                    "side": "SELL", "symbol": symbol, "shares": quantity,
+                    "price": price, "fee": fee, "reason": "stop",
+                })
+                shares.pop(symbol, None)
+                average_cost.pop(symbol, None)
+                stopped_today.add(symbol)
+            stop_pending -= stopped_today
         if pending_symbols is not None:
             target = targets(current_date, pending_symbols, equity(current_date))
             for symbol in sorted(set(shares) | set(target)):
@@ -99,12 +125,20 @@ def run_capital_backtest(
                 gross = quantity * price
                 fee = gross * config.transaction_cost_rate
                 cash += gross - fee
-                trades.append({"date": current_date.isoformat(), "signal_date": pending_signal.isoformat(), "side": "SELL", "symbol": symbol, "shares": quantity, "price": price, "fee": fee})
+                trades.append({
+                    "date": current_date.isoformat(),
+                    "signal_date": pending_signal.isoformat(),
+                    "side": "SELL", "symbol": symbol, "shares": quantity,
+                    "price": price, "fee": fee, "reason": "rebalance",
+                })
                 if new:
                     shares[symbol] = new
                 else:
                     shares.pop(symbol, None)
+                    average_cost.pop(symbol, None)
             for symbol in sorted(target):
+                if symbol in stopped_today:
+                    continue
                 old = shares.get(symbol, 0)
                 new = target[symbol]
                 if new <= old:
@@ -115,14 +149,29 @@ def run_capital_backtest(
                 fee = gross * config.transaction_cost_rate
                 if gross + fee <= cash + 1e-9:
                     cash -= gross + fee
+                    old_cost = average_cost.get(symbol, 0.0) * old
                     shares[symbol] = new
-                    trades.append({"date": current_date.isoformat(), "signal_date": pending_signal.isoformat(), "side": "BUY", "symbol": symbol, "shares": quantity, "price": price, "fee": fee})
+                    average_cost[symbol] = (old_cost + gross) / new
+                    trades.append({
+                        "date": current_date.isoformat(),
+                        "signal_date": pending_signal.isoformat(),
+                        "side": "BUY", "symbol": symbol, "shares": quantity,
+                        "price": price, "fee": fee, "reason": "rebalance",
+                    })
             pending_symbols = None
         if index % config.rebalance_days == 0:
             risk_on = selector.market_breadth(current_date) >= config.minimum_market_breadth
             picks = selector.select(current_date) if risk_on else []
             pending_symbols = [item.symbol for item in picks]
             pending_signal = current_date
+        elif config.stop_loss_pct and shares:
+            for symbol in list(shares):
+                bar = selector.by_date.get(current_date, {}).get(symbol)
+                if bar is None:
+                    continue
+                cost = average_cost.get(symbol, bar.close)
+                if bar.close / cost - 1.0 <= -config.stop_loss_pct:
+                    stop_pending.add(symbol)
         if shares:
             invested_days += 1
         curve.append({"date": current_date.isoformat(), "equity": equity(current_date), "cash": cash, "positions": len(shares)})
