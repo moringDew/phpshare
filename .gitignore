@@ -11,4 +11,7 @@ data/a_share_cnequity.csv
 data/a_share_public*.csv
 data/a_share_daily.csv
 vendor/
+data/real_account/
+docs/md/真实持仓.md
+docs/html/真实持仓.html
 

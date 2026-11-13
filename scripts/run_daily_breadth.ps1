@@ -8,5 +8,5 @@ $Log = Join-Path $LogDir ("daily_breadth_" + (Get-Date -Format "yyyy-MM-dd") + "
 
 Set-Location $Root
 $env:PYTHONIOENCODING = "utf-8"
-& $Python -I "scripts\daily_breadth_report.py" --send *>> $Log
+& $Python -I "scripts\daily_breadth_report.py" --send --signals-only *>> $Log
 exit $LASTEXITCODE

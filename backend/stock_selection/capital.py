@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import date
 from typing import Dict, List, Optional, Sequence, Set
 
@@ -23,9 +23,43 @@ class CapitalBacktestResult:
     final_positions: Dict[str, int]
     equity_curve: List[Dict[str, object]]
     trades: List[Dict[str, object]]
+    pending_symbols: Optional[List[str]] = None
+    pending_stop_symbols: List[str] = field(default_factory=list)
+    average_cost: Dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, object]:
         return asdict(self)
+
+
+def target_shares(selector: StockSelector, on_date: date, symbols: Sequence[str], total_equity: float) -> Dict[str, int]:
+    config = selector.config
+    if not symbols:
+        return {}
+    total_limit = total_equity * config.maximum_equity_exposure
+    single_limit = total_equity * config.maximum_single_position
+    equal_target = min(total_limit / len(symbols), single_limit)
+    quantities: Dict[str, int] = {}
+    amounts: Dict[str, float] = {}
+    for symbol in symbols:
+        price = selector.by_date[on_date][symbol].close
+        quantity = int(equal_target // (price * config.lot_size)) * config.lot_size
+        quantities[symbol] = quantity
+        amounts[symbol] = quantity * price
+    invested = sum(amounts.values())
+    while True:
+        eligible = []
+        for rank, symbol in enumerate(symbols):
+            price = selector.by_date[on_date][symbol].close
+            lot_cost = price * config.lot_size
+            if amounts[symbol] + lot_cost <= single_limit + 1e-9 and invested + lot_cost <= total_limit + 1e-9:
+                eligible.append((amounts[symbol] / single_limit, rank, symbol, lot_cost))
+        if not eligible:
+            break
+        _, _, symbol, lot_cost = min(eligible)
+        quantities[symbol] += config.lot_size
+        amounts[symbol] += lot_cost
+        invested += lot_cost
+    return {symbol: quantity for symbol, quantity in quantities.items() if quantity > 0}
 
 
 def run_capital_backtest(
@@ -56,35 +90,6 @@ def run_capital_backtest(
             if symbol in selector.by_date[on_date]
         )
 
-    def targets(on_date: date, symbols: Sequence[str], total_equity: float) -> Dict[str, int]:
-        if not symbols:
-            return {}
-        total_limit = total_equity * config.maximum_equity_exposure
-        single_limit = total_equity * config.maximum_single_position
-        equal_target = min(total_limit / len(symbols), single_limit)
-        quantities: Dict[str, int] = {}
-        amounts: Dict[str, float] = {}
-        for symbol in symbols:
-            price = selector.by_date[on_date][symbol].close
-            quantity = int(equal_target // (price * config.lot_size)) * config.lot_size
-            quantities[symbol] = quantity
-            amounts[symbol] = quantity * price
-        invested = sum(amounts.values())
-        while True:
-            eligible = []
-            for rank, symbol in enumerate(symbols):
-                price = selector.by_date[on_date][symbol].close
-                lot_cost = price * config.lot_size
-                if amounts[symbol] + lot_cost <= single_limit + 1e-9 and invested + lot_cost <= total_limit + 1e-9:
-                    eligible.append((amounts[symbol] / single_limit, rank, symbol, lot_cost))
-            if not eligible:
-                break
-            _, _, symbol, lot_cost = min(eligible)
-            quantities[symbol] += config.lot_size
-            amounts[symbol] += lot_cost
-            invested += lot_cost
-        return {symbol: quantity for symbol, quantity in quantities.items() if quantity > 0}
-
     daily_cash_rate = config.cash_yield_annual / 252.0
     for index, current_date in enumerate(calendar):
         if index > 0:
@@ -114,7 +119,7 @@ def run_capital_backtest(
                 stopped_today.add(symbol)
             stop_pending -= stopped_today
         if pending_symbols is not None:
-            target = targets(current_date, pending_symbols, equity(current_date))
+            target = target_shares(selector, current_date, pending_symbols, equity(current_date))
             for symbol in sorted(set(shares) | set(target)):
                 old = shares.get(symbol, 0)
                 new = target.get(symbol, 0)
@@ -197,5 +202,8 @@ def run_capital_backtest(
         final_positions=dict(shares),
         equity_curve=curve,
         trades=trades,
+        pending_symbols=pending_symbols,
+        pending_stop_symbols=sorted(stop_pending),
+        average_cost=dict(average_cost),
     )
 

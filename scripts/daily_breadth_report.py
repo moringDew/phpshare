@@ -18,11 +18,14 @@ from typing import Dict, List, Optional, Tuple
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from render_strategy_summary import render_document
+from real_positions import LEDGER as REAL_LEDGER, export_report as export_real_report
 BACKEND = ROOT / "backend"
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
 
 from stock_selection.capital import run_capital_backtest  # noqa: E402
+from stock_selection.alerts import build_trade_alert, format_trade_alert
+from stock_selection.real_account import snapshot as real_snapshot, reconcile_message
 from stock_selection.engine import SelectionConfig, StockSelector, infer_board, load_bars  # noqa: E402
 
 BASE_CSV = ROOT / "data" / "a_share_public_20261113.csv"
@@ -33,6 +36,7 @@ PUSH_CONFIG = ROOT / ".secrets" / "push_config.json"
 HISTORY_CSV = ROOT / "output" / "breadth_history.csv"
 LATEST_JSON = ROOT / "output" / "breadth_latest.json"
 LAST_PUSH = ROOT / "output" / "last_breadth_push.json"
+LAST_TRADE_PUSH = ROOT / "output" / "last_trade_signal_push.json"
 REPORT_DIR = ROOT / "docs" / "md" / "市场广度日报"
 
 FIELDS = ["date", "symbol", "close", "volume", "adj_factor", "listing_days", "is_st", "suspended"]
@@ -132,6 +136,14 @@ def update_store(base: Path, store: Path) -> Tuple[List[Dict[str, str]], List[st
                 }
             )
 
+    complete_rows = []
+    for day in sorted({row['date'] for row in new_rows}):
+        daily_rows = [row for row in new_rows if row['date'] == day]
+        if {row['symbol'] for row in daily_rows} != set(universe):
+            log("{} 行情不完整，暂不写入该日及后续日期，等待重试".format(day))
+            break
+        complete_rows.extend(daily_rows)
+    new_rows = complete_rows
     if new_rows:
         rows = rows + new_rows
         rows.sort(key=lambda row: (row["date"], row["symbol"]))
@@ -221,17 +233,13 @@ def current_portfolio(selector: StockSelector, config: SelectionConfig, target_i
     result = run_capital_backtest(selector, calendar[start], target)
     positions = {str(symbol): int(shares) for symbol, shares in result.final_positions.items() if int(shares) > 0}
 
-    last_buy: Dict[str, float] = {}
-    for trade in result.trades:
-        if trade.get("side") == "BUY":
-            last_buy[str(trade["symbol"])] = float(trade["price"])
-
     holdings: List[Dict[str, object]] = []
     for symbol, shares in positions.items():
-        current_close = latest_close(selector, symbol, target)
+        bar = selector.by_date.get(target, {}).get(symbol)
+        current_close = bar.close if bar else None
         if current_close is None:
             continue
-        cost = last_buy.get(symbol, current_close)
+        cost = result.average_cost.get(symbol, current_close)
         amount = shares * cost
         market_value = shares * current_close
         holdings.append(
@@ -276,6 +284,7 @@ def current_portfolio(selector: StockSelector, config: SelectionConfig, target_i
         "maximum_drawdown": float(result.maximum_drawdown) * 100.0,
         "exposure": config.maximum_equity_exposure,
         "trades": len(result.trades),
+        "trade_alert": build_trade_alert(selector, result, target),
     }
 
 
@@ -307,7 +316,7 @@ def daily_advice(portfolio: Dict[str, object], target_index: int, rebalance_indi
                  breadth: float, threshold: float, remaining: Optional[int]) -> str:
     if target_index in rebalance_indices:
         if breadth >= threshold:
-            return "今日为调仓日，策略信号为换仓/建仓；下一交易日开盘按名单执行。"
+            return "今日为调仓日，策略信号为换仓/建仓；回测按下一交易日收盘价模拟成交，详见买卖提醒。"
         return "今日为调仓日，广度低于 {:.0f}% 门槛，策略信号为转空仓。".format(threshold * 100)
     if breadth < threshold:
         return "今日不操作；广度已低于 {:.0f}% 门槛，下次调仓将转空仓（还剩 {} 个交易日）。".format(
@@ -496,6 +505,7 @@ def write_snapshot(target: date, title: str, message: str, window: List[Tuple[da
 def main() -> int:
     parser = argparse.ArgumentParser(description="每个交易日生成市场广度报告并可推送到微信")
     parser.add_argument("--send", action="store_true", help="实际发送；不加则只打印")
+    parser.add_argument("--signals-only", action="store_true", help="仅在有买卖或调仓复核信号时推送")
     parser.add_argument("--force", action="store_true", help="忽略当日已推送记录")
     parser.add_argument("--date", type=date.fromisoformat, help="指定日期，默认今天")
     parser.add_argument("--no-update", action="store_true", help="不抓取新行情")
@@ -506,6 +516,11 @@ def main() -> int:
     parser.add_argument("--base", type=Path, default=BASE_CSV)
     parser.add_argument("--store", type=Path, default=STORE_CSV)
     args = parser.parse_args()
+
+    if args.send and (args.date and args.date != datetime.now().date()):
+        raise ValueError("历史回放不能发送实时提醒，请移除 --send")
+    if args.send and datetime.now().hour < 15:
+        raise ValueError("收盘前不能发送日线交易信号")
 
     if not args.no_update:
         update_store(args.base, args.store)
@@ -525,6 +540,11 @@ def main() -> int:
             log("{} 没有行情（周末/休市或数据源未更新），跳过推送".format(target))
             return 0
         raise RuntimeError("指定日期 {} 不在行情日历中".format(target))
+
+    if args.send:
+        expected = set(selector.by_symbol)
+        if not expected.issubset(selector.by_date[target]):
+            raise RuntimeError("当日行情不完整，停止发送买卖信号，请检查数据源后重试")
 
     index = calendar.index(target)
     above, available, value = breadth_details(selector, optimized, target)
@@ -552,6 +572,7 @@ def main() -> int:
     report_portfolio = current_portfolio(selector_report, report, index)
     symbols_to_name = [str(holding["symbol"]) for holding in portfolio["holdings"]]
     symbols_to_name += [str(item["symbol"]) for item in portfolio.get("skipped", [])]
+    symbols_to_name += [row['symbol'] for row in portfolio['trade_alert']['orders']]
     names = fetch_names(sorted(set(symbols_to_name)))
     for holding in portfolio["holdings"]:
         holding["name"] = names.get(str(holding["symbol"]), str(holding["symbol"]))
@@ -559,7 +580,7 @@ def main() -> int:
         item["name"] = names.get(str(item["symbol"]), str(item["symbol"]))
 
     stop_watch = []
-    if optimized.stop_loss_pct:
+    if optimized.stop_loss_pct and index not in rebalance_indices:
         for holding in portfolio["holdings"]:
             if float(holding["return_pct"]) <= -optimized.stop_loss_pct * 100.0:
                 stop_watch.append(holding)
@@ -591,6 +612,17 @@ def main() -> int:
         target, value, above, available, delta, window, optimized_threshold, report_threshold,
         remaining, portfolio, advice, risk_notes, report_in_market, track_start,
     )
+    alert_title, alert_message = format_trade_alert(portfolio['trade_alert'], names)
+    message += '\n\n' + alert_message
+    real_account = real_snapshot(REAL_LEDGER, target) if REAL_LEDGER.exists() else None
+    if real_account:
+        reconciliation = reconcile_message(real_account, portfolio['trade_alert'])
+        if reconciliation:
+            alert_message += '\n\n' + reconciliation
+        if target == datetime.now().date():
+            export_real_report()
+    if args.signals_only:
+        title = alert_title
 
     update_history(target, value, above, available, delta, zone)
     latest = {
@@ -647,6 +679,8 @@ def main() -> int:
         },
         "report_50_in_market": report_in_market,
         "advice": advice,
+        "trade_alert": portfolio['trade_alert'],
+        "real_account": real_account,
         "risk_notes": risk_notes,
         "strategy_start": optimized.strategy_start,
         "stop_loss_pct": optimized.stop_loss_pct,
@@ -678,6 +712,18 @@ def main() -> int:
         log("未加 --send，仅生成报告")
         return 0
 
+    if args.signals_only and not portfolio['trade_alert']['actionable']:
+        log("无买卖或调仓复核信号，仅保存报告，不推送")
+        return 0
+
+    last_push_path = LAST_TRADE_PUSH if args.signals_only else LAST_PUSH
+    if args.signals_only:
+        message = alert_message
+    elif real_account:
+        reconciliation = reconcile_message(real_account, portfolio['trade_alert'])
+        if reconciliation:
+            message += '\n\n' + reconciliation
+
     config = load_push_config(args.config)
     provider = args.provider or config.get("provider")
     topic = None
@@ -689,9 +735,12 @@ def main() -> int:
     else:
         token = ""
 
-    if LAST_PUSH.exists() and not args.force:
+    if topic and real_account and real_account['trade_count']:
+        raise ValueError("真实持仓核对仅发送个人微信，不发送群组")
+
+    if last_push_path.exists() and not args.force:
         try:
-            last = json.loads(LAST_PUSH.read_text(encoding="utf-8"))
+            last = json.loads(last_push_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             last = {}
         if last.get("date") == target.isoformat():
@@ -700,7 +749,7 @@ def main() -> int:
 
     if not provider or not token:
         log("未配置推送渠道或 token：请在 {} 中填写 provider 与对应 token".format(args.config))
-        return 0
+        return 1
 
     if provider == "pushplus":
         ok, detail = send_pushplus(token, title, message, topic)
@@ -709,8 +758,8 @@ def main() -> int:
     log("推送结果 provider={} ok={} {}".format(provider, ok, detail))
     if not ok:
         return 1
-    LAST_PUSH.parent.mkdir(parents=True, exist_ok=True)
-    LAST_PUSH.write_text(
+    last_push_path.parent.mkdir(parents=True, exist_ok=True)
+    last_push_path.write_text(
         json.dumps(
             {"date": target.isoformat(), "provider": provider, "sent_at": datetime.now().isoformat(timespec="seconds")},
             ensure_ascii=False,

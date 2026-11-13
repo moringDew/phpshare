@@ -7,3 +7,5 @@
 - 转换后核对正文和表格数据，避免 HTML 与 Markdown 源文件不同步。
 - 批量转换使用 `python scripts/render_strategy_summary.py --all`，扫描 `docs/md/` 并同步生成 `docs/html/文档目录.html`。已有链接会指向相应 HTML，代码块保留原文（Mermaid 当前以代码块展示）。
 - 本文件是代理操作指令，无需生成 HTML 阅读版。
+- 用户会通过对话提供实际买卖成交。真实持仓使用 `scripts/real_positions.py` 录入，数据保存在 `data/real_account/trades.sqlite3`，与模拟盘分开。必须有股票代码、买卖方向、实际成交时间、价格和金额；无法准确推算股数或费用口径不清时先核对，不将计划、示例或策略信号当成已成交。手续费未提供时留空标记未知，不假设为零。
+- 每次真实成交录入或更正后刷新 `docs/md/真实持仓.md` 与 `docs/html/真实持仓.html`；这些个人数据及数据库不提交 Git。

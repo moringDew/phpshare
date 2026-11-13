@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>真实持仓录入说明</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>真实持仓录入说明 · 目录</strong><a href="#section-1">告诉我这些信息即可</a><a href="#section-2">台账和盈亏</a><a href="#section-3">与微信提醒的关系</a><a href="#section-4">查看和维护</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E7%9C%9F%E5%AE%9E%E6%8C%81%E4%BB%93%E8%AF%B4%E6%98%8E.md">真实持仓说明.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">真实持仓录入说明</h1>
+<h2 id="section-1">告诉我这些信息即可</h2>
+<ul>
+<li><p>买入或卖出方向。</p></li>
+<li><p>股票代码；股票名称可一起提供，仅有名称时先确认对应代码。</p></li>
+<li><p>实际成交日期和时间，默认为北京时间。</p></li>
+<li><p>成交价格、成交金额。</p></li>
+<li><p>成交股数（能由金额和价格准确推算时可省略）。</p></li>
+<li><p>手续费及金额是否包含费用；不知道手续费时会标记为未知。</p></li>
+</ul>
+<p>格式示例（仅为格式，不会自动录入）：</p>
+<p><code>买入 600000 浦发银行，2026-11-13 14:50，成交价 10 元，成交金额 10000 元，手续费另计 5 元。</code></p>
+<p>卖出也按相同格式告知。只有你确认实际成交后才登记，策略提醒和计划不作为成交。</p>
+<h2 id="section-2">台账和盈亏</h2>
+<p>真实成交与策略模拟盘分开保存。多次买入按移动加权平均成本合并，部分卖出扣除相应成本并计算已实现盈亏。</p>
+<p>已知买入费用计入成本，卖出费用扣减已实现盈亏；未提供费用时显示“未知”，不把零费用当成已确认事实。没有初始资金、资金转入转出和分红记录时，不计算账户现金余额及总收益率。</p>
+<p>当前只记录实际成交和已实现盈亏。没有真实未复权行情时，不用模拟回测的复权价格估算实盘市值、浮动盈亏或实盘止损。</p>
+<h2 id="section-3">与微信提醒的关系</h2>
+<p>已有买卖提醒仍按策略模拟盘生成。录入真实成交后，提醒会增加真实持仓核对，包括你实际录入的持股数量，以及模拟卖出股数和真实数量的差异。</p>
+<p>这不是券商实时同步，也未启用独立的实盘止损监控。提醒不会自动增减台账持仓；实际买卖后需要继续告诉我成交结果。</p>
+<h2 id="section-4">查看和维护</h2>
+<ul>
+<li><p><a href="%E7%9C%9F%E5%AE%9E%E6%8C%81%E4%BB%93.html">真实持仓与成交台账</a>：本地生成，初始为空。</p></li>
+<li><p>数据库：<code>data/real_account/trades.sqlite3</code>。</p></li>
+<li><p>查看记录：<code>python -I scripts/real_positions.py show</code>。</p></li>
+<li><p>刷新页面：<code>python -I scripts/real_positions.py export</code>。</p></li>
+<li><p>已确认成交由 <code>python -I scripts/real_positions.py add</code> 录入。</p></li>
+<li><p>误录可以使用 <code>void --trade-id 记录ID --reason 原因</code> 作废，保留审计记录；如果作废会导致后续卖出超过持仓，会拒绝并要求先核对关联记录。</p></li>
+<li><p>重复成交会被拦截；确有两笔完全相同成交时，使用各自唯一的 <code>--trade-id</code>。</p></li>
+<li><p>真实数据库及真实持仓 Markdown/HTML 已排除在 Git 提交之外。请另行备份本地数据库。</p></li>
+</ul>
+<pre><code class="language-powershell">python -I scripts/real_positions.py add --side BUY --symbol 600000 --name 浦发银行 --time &quot;2026-11-13 14:50&quot; --price 10 --amount 10000 --fee 5</code></pre>
+<p>上面的命令只是示例，不会执行。<code>--amount</code> 默认指不含费用的成交额；若是含费用的买入支出或卖出到账额，加 <code>--amount-includes-fees</code> 并提供 <code>--fee</code>。金额、价格和股数不一致时必须核对，不会擅自四舍五入股数。</p></main></div></body></html>

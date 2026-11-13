@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>微信买卖提醒</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>微信买卖提醒 · 目录</strong><a href="#section-1">提醒时间与渠道</a><a href="#section-2">提醒内容</a><a href="#section-3">时间与持仓口径</a><a href="#section-4">文件与命令</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E4%B9%B0%E5%8D%96%E6%8F%90%E9%86%92%E8%AF%B4%E6%98%8E.md">买卖提醒说明.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">微信买卖提醒</h1>
+<h2 id="section-1">提醒时间与渠道</h2>
+<ul>
+<li><p>渠道：已配置的 PushPlus 个人微信，不推送群组。</p></li>
+<li><p>定时任务：<code>QuantBreadthDaily</code>，北京时间周一至周五 20:00 检查收盘行情。</p></li>
+<li><p>仅有买卖或调仓复核信号时推送；无信号时只保存日报。</p></li>
+<li><p>电脑需开机且能够联网；本地计划任务不是云端常驻服务。</p></li>
+<li><p>当前数据源无法区分休市与数据更新延迟：当日无行情时跳过发送并记录日志；行情不完整时不发送交易提醒。</p></li>
+</ul>
+<h2 id="section-2">提醒内容</h2>
+<ul>
+<li><p>买入：调仓信号产生后，列出预计增持的股票、股数、信号日收盘参考价。</p></li>
+<li><p>卖出：列出调仓减持、清仓或个股止损的股票和股数。</p></li>
+<li><p>清单先展示卖出，再展示买入，便于核对资金。</p></li>
+<li><p>信号直接读取模拟回测引擎的待执行状态；广度低于门槛不会在非调仓日单独触发清仓。</p></li>
+<li><p>同一天同类提醒成功提交推送后不会重复发送；失败不记录为成功，可重试。</p></li>
+</ul>
+<h2 id="section-3">时间与持仓口径</h2>
+<p>提醒是收盘后生成的下一交易日操作清单。现有回测使用下一交易日收盘价模拟成交，并未设定盘中某分钟自动下单。</p>
+<p>清单基于策略模拟盘，不是券商真实持仓。股数按信号日收盘参考价和当前模拟资产估算；下一交易日价格变化可能改变股数、手续费和可执行性。执行前需自行核对实际持仓与资金，参考价不保证成交。</p>
+<p>现在支持 <a href="%E7%9C%9F%E5%AE%9E%E6%8C%81%E4%BB%93%E8%AF%B4%E6%98%8E.html">手工真实持仓台账</a>。录入实际成交后，个人微信提醒会附上真实持仓数量和模拟买卖清单的核对信息；不自动把模拟买卖写入真实台账，也不会据此声称已读取券商账户或实盘现金。</p>
+<p>个股止损沿用引擎口径：非调仓日收盘时比较移动平均持仓成本，触发后列入下一交易日卖出提醒；不是盘中实时止损监控。</p>
+<h2 id="section-4">文件与命令</h2>
+<ul>
+<li><p>任务入口：<code>scripts/run_daily_breadth.ps1</code></p></li>
+<li><p>提醒生成：<code>python -I scripts/daily_breadth_report.py --signals-only</code></p></li>
+<li><p>生成并发送：<code>python -I scripts/daily_breadth_report.py --signals-only --send</code></p></li>
+<li><p>历史回放：<code>python -I scripts/daily_breadth_report.py --no-update --date 2026-11-13 --signals-only</code>；历史回放禁止带 <code>--send</code>。</p></li>
+<li><p>最新结果：<code>output/breadth_latest.json</code> 中的 <code>trade_alert</code>。</p></li>
+<li><p>推送去重：<code>output/last_trade_signal_push.json</code>。</p></li>
+<li><p>日志：<code>output/logs/daily_breadth_YYYY-MM-DD.log</code>。</p></li>
+<li><p>报告：<code>docs/md/市场广度日报/</code> 和 <code>docs/html/市场广度日报/</code>。</p></li>
+</ul>
+<p>本功能仅发送提醒，不会连接券商提交订单。</p></main></div></body></html>
