@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>市场广度报告 · 2026-10-08 — 2026-11-13</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body.viz-root {
+    --surface-1: #fcfcfb;
+    --page: #f9f9f7;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --series-1: #2a78d6;
+    --critical: #d03b3b;
+    --good: #0ca30c;
+    --warning: #fab219;
+    --border: rgba(11, 11, 11, 0.10);
+    background: var(--page);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      --surface-1: #1a1a19;
+      --page: #0d0d0d;
+      --text-primary: #f0efec;
+      --text-secondary: #c3c2b7;
+      --muted: #898781;
+      --grid: #2c2c2a;
+      --baseline: #383835;
+      --series-1: #3987e5;
+      --border: rgba(255, 255, 255, 0.10);
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    --surface-1: #1a1a19;
+    --page: #0d0d0d;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --series-1: #3987e5;
+    --border: rgba(255, 255, 255, 0.10);
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 64px; }
+  header.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+  h1 { margin: 0 0 6px; font-size: 28px; font-weight: 650; letter-spacing: -0.01em; }
+  .subtitle { margin: 0; font-size: 14px; color: var(--text-secondary); }
+  .theme-btn {
+    flex: none; border: 1px solid var(--border); background: var(--surface-1);
+    color: var(--text-secondary); font: inherit; font-size: 12px;
+    padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  }
+  .theme-btn:hover { color: var(--text-primary); }
+
+  .hero {
+    margin-top: 28px; background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px 24px; display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;
+  }
+  .hero-value { font-size: 56px; font-weight: 600; line-height: 1; letter-spacing: -0.02em; }
+  .hero-label { font-size: 13px; color: var(--text-secondary); }
+  .hero-delta { font-size: 14px; font-weight: 600; color: var(--critical); margin-left: 4px; }
+  .hero-note { font-size: 13px; color: var(--text-secondary); margin-left: auto; }
+
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+  .tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .tile-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  .tile-value { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .tile-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-top: 20px;
+  }
+  .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+  .card-title { font-size: 15px; font-weight: 600; }
+  .card-sub { font-size: 12px; color: var(--muted); }
+
+  .chart-wrap { position: relative; width: 100%; }
+  svg#chart { display: block; width: 100%; height: auto; overflow: visible; }
+  .tooltip {
+    position: absolute; z-index: 3; pointer-events: none; opacity: 0;
+    transform: translate(-50%, -100%); transition: opacity 90ms ease;
+    background: var(--surface-1); border: 1px solid var(--border);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+    border-radius: 8px; padding: 10px 12px; min-width: 150px;
+  }
+  .tt-date { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
+  .tt-value { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .tt-meta { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .tt-status { font-size: 12px; margin-top: 5px; }
+
+  .notes { margin: 0; padding-left: 20px; }
+  .notes li { font-size: 14px; line-height: 1.65; color: var(--text-secondary); margin: 6px 0; }
+  .notes strong { color: var(--text-primary); font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  caption { text-align: left; font-size: 12px; color: var(--muted); padding-bottom: 8px; }
+  th { text-align: left; font-size: 12px; font-weight: 500; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { font-size: 13px; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  td.num, th.num { text-align: right; }
+  tr:last-child td { border-bottom: 0; }
+  .pill { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; color: var(--text-primary); white-space: nowrap; }
+  .pill.off { background: rgba(208, 59, 59, 0.10); }
+  .pill.partial { background: rgba(250, 178, 25, 0.18); }
+  .pill.on { background: rgba(12, 163, 12, 0.12); }
+
+  .foot { margin-top: 20px; font-size: 12px; line-height: 1.7; color: var(--muted); }
+  .foot p { margin: 4px 0; }
+  @media (max-width: 760px) {
+    .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hero-note { margin-left: 0; }
+    h1 { font-size: 23px; }
+    .hero-value { font-size: 44px; }
+  }
+</style>
+</head>
+<body class="viz-root">
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>市场广度报告</h1>
+      <p class="subtitle">2026-10-08 — 2026-11-13 · 27 个交易日 · 收盘价站上 60 日均线的股票占比</p>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button">深色</button>
+  </header>
+
+  <section class="hero" aria-label="最新市场广度">
+    <span class="hero-label">最新（11-13）</span>
+    <span class="hero-value" id="heroValue">—</span>
+    <span class="hero-label">站上 60 日均线</span>
+    <span class="hero-delta" id="heroDelta">—</span>
+    <span class="hero-note">报告版门槛 50% · 优化版门槛 40%</span>
+  </section>
+
+  <section class="tiles" aria-label="区间统计">
+    <div class="tile">
+      <div class="tile-label">期间均值</div>
+      <div class="tile-value" id="statAvg">—</div>
+      <div class="tile-sub">27 个交易日</div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">区间最低</div>
+      <div class="tile-value" id="statMin">—</div>
+      <div class="tile-sub" id="statMinDate">—</div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">区间最高</div>
+      <div class="tile-value" id="statMax">—</div>
+      <div class="tile-sub" id="statMaxDate">—</div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">站上 50% 的天数</div>
+      <div class="tile-value" id="statAbove50">—</div>
+      <div class="tile-sub">报告版全程未触发</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div class="card-title">每日市场广度</div>
+      <div class="card-sub">虚线为策略门槛：50%（报告版）与 40%（优化版）</div>
+    </div>
+    <div class="chart-wrap" id="chartWrap">
+      <svg id="chart" viewBox="0 0 960 380" role="img" aria-label="2026-10-08 至 2026-11-13 每日市场广度折线图"></svg>
+      <div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-title" style="margin-bottom:10px;">观察</div>
+    <ul class="notes">
+      <li><strong>10 月全月没有一天站上 50%。</strong>广度在 26.7%～38.2% 之间，报告版（50% 门槛）从 10 月至今全程空仓。</li>
+      <li><strong>11 月初开始修复，但只修复到门槛附近。</strong>11-05 首次站上 40%，11-10 见顶 47.06%，仍差 50% 门槛 2.9 个百分点；优化版在 11-06 调仓建仓，建仓时广度 41.38%，属于贴线入场。</li>
+      <li><strong>11-10 之后连续三日回落。</strong>47.06% → 46.45% → 43.20% → 40.16%，累计 -6.9 个百分点，距 40% 门槛只剩 0.16 个百分点。</li>
+      <li><strong>含义：</strong>11-06 建仓所依据的市场环境并不稳固。若 12-04 调仓前广度跌破 40%，优化版将转为空仓；报告版则一直是空仓。11-13 的 40.16% 是“勉强在场”，不是“确认转强”。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <table id="dataTable">
+      <caption>每日明细（最新在前）· 广度 = 站上 60 日均线股票数 ÷ 可计算股票数</caption>
+      <thead>
+        <tr>
+          <th>日期</th>
+          <th class="num">广度</th>
+          <th class="num">站上均线</th>
+          <th class="num">样本数</th>
+          <th class="num">较前一日</th>
+          <th>状态</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </section>
+
+  <div class="foot">
+    <p>口径：收盘价（前复权）高于自身过去 60 个交易日收盘均线的股票数 ÷ 可计算股票数。样本为 11-10 成交额靠前的 500 只沪深主板及创业板股票，剔除 ST、停牌及历史不足 60 个交易日的标的。</p>
+    <p>数据：2026-10-08 至 11-10 来自东方财富公开行情备用源；11-11 至 11-13 来自腾讯前复权日线，按 11-10 收盘价比例拼接。10-01 至 10-07 为国庆休市，10-08 为节后首个交易日。</p>
+    <p>本报告为历史研究记录，不构成投资建议。广度只在调仓日影响仓位，下一次调仓日为 2026-12-04。</p>
+  </div>
+</div>
+
+<script>
+const DATA = [
+  { d: '2026-10-08', b: 38.16, a: 187, n: 490 },
+  { d: '2026-10-09', b: 37.88, a: 186, n: 491 },
+  { d: '2026-10-12', b: 34.62, a: 170, n: 491 },
+  { d: '2026-10-13', b: 37.14, a: 182, n: 490 },
+  { d: '2026-10-14', b: 35.10, a: 172, n: 490 },
+  { d: '2026-10-15', b: 32.04, a: 157, n: 490 },
+  { d: '2026-10-16', b: 30.75, a: 151, n: 491 },
+  { d: '2026-10-19', b: 30.14, a: 148, n: 491 },
+  { d: '2026-10-20', b: 33.40, a: 164, n: 491 },
+  { d: '2026-10-21', b: 34.42, a: 169, n: 491 },
+  { d: '2026-10-22', b: 27.03, a: 133, n: 492 },
+  { d: '2026-10-23', b: 33.33, a: 164, n: 492 },
+  { d: '2026-10-26', b: 32.79, a: 161, n: 491 },
+  { d: '2026-10-27', b: 29.74, a: 146, n: 491 },
+  { d: '2026-10-28', b: 34.62, a: 170, n: 491 },
+  { d: '2026-10-29', b: 32.38, a: 159, n: 491 },
+  { d: '2026-10-30', b: 26.68, a: 131, n: 491 },
+  { d: '2026-11-02', b: 32.93, a: 162, n: 492 },
+  { d: '2026-11-03', b: 33.67, a: 166, n: 493 },
+  { d: '2026-11-04', b: 39.96, a: 197, n: 493 },
+  { d: '2026-11-05', b: 44.02, a: 217, n: 493 },
+  { d: '2026-11-06', b: 41.38, a: 204, n: 493 },
+  { d: '2026-11-09', b: 43.81, a: 216, n: 493 },
+  { d: '2026-11-10', b: 47.06, a: 232, n: 493 },
+  { d: '2026-11-11', b: 46.45, a: 229, n: 493 },
+  { d: '2026-11-12', b: 43.20, a: 213, n: 493 },
+  { d: '2026-11-13', b: 40.16, a: 198, n: 493 }
+];
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const W = 960, H = 380;
+const M = { t: 30, r: 96, b: 46, l: 56 };
+const PW = W - M.l - M.r, PH = H - M.t - M.b;
+const Y_MAX = 60;
+
+const svg = document.getElementById('chart');
+const wrap = document.getElementById('chartWrap');
+const tooltip = document.getElementById('tooltip');
+
+function el(tag, attrs) {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  return node;
+}
+const x = i => M.l + i * (PW / (DATA.length - 1));
+const y = v => M.t + (1 - v / Y_MAX) * PH;
+const fmt = v => v.toFixed(2) + '%';
+const weekday = iso => ['周日','周一','周二','周三','周四','周五','周六'][new Date(iso + 'T00:00:00').getDay()];
+
+function status(b) {
+  if (b >= 50) return { text: '风险开（两版）', cls: 'on' };
+  if (b >= 40) return { text: '仅优化版在场', cls: 'partial' };
+  return { text: '两版空仓', cls: 'off' };
+}
+
+function build() {
+  svg.innerHTML = '';
+
+  // gridlines + y labels
+  [0, 20, 40, 60].forEach(v => {
+    svg.appendChild(el('line', {
+      x1: M.l, x2: M.l + PW, y1: y(v), y2: y(v),
+      stroke: 'var(--grid)', 'stroke-width': 1
+    }));
+    const label = el('text', {
+      x: M.l - 10, y: y(v) + 4, 'text-anchor': 'end',
+      fill: 'var(--muted)', 'font-size': 11,
+      'font-variant-numeric': 'tabular-nums'
+    });
+    label.textContent = v + '%';
+    svg.appendChild(label);
+  });
+
+  // thresholds
+  [40, 50].forEach(v => {
+    svg.appendChild(el('line', {
+      x1: M.l, x2: M.l + PW, y1: y(v), y2: y(v),
+      stroke: 'var(--muted)', 'stroke-width': 1, 'stroke-dasharray': '4 4', opacity: 0.7
+    }));
+    const label = el('text', {
+      x: M.l + PW + 10, y: y(v) + 4,
+      fill: 'var(--muted)', 'font-size': 11
+    });
+    label.textContent = v + '% 门槛';
+    svg.appendChild(label);
+  });
+
+  // x labels
+  [0, 4, 8, 12, 16, 20, 26].forEach(i => {
+    const label = el('text', {
+      x: x(i), y: H - M.b + 22, 'text-anchor': 'middle',
+      fill: 'var(--muted)', 'font-size': 11,
+      'font-variant-numeric': 'tabular-nums'
+    });
+    label.textContent = DATA[i].d.slice(5);
+    svg.appendChild(label);
+  });
+
+  // baseline
+  svg.appendChild(el('line', {
+    x1: M.l, x2: M.l + PW, y1: y(0), y2: y(0),
+    stroke: 'var(--baseline)', 'stroke-width': 1
+  }));
+
+  // area wash
+  const area = DATA.map((p, i) => (i === 0 ? 'M' : 'L') + x(i) + ' ' + y(p.b)).join(' ');
+  svg.appendChild(el('path', {
+    d: area + ` L ${x(DATA.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`,
+    fill: 'var(--series-1)', opacity: 0.08
+  }));
+
+  // line
+  svg.appendChild(el('path', {
+    d: area, fill: 'none', stroke: 'var(--series-1)',
+    'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round'
+  }));
+
+  // min marker + label
+  let minI = 0;
+  DATA.forEach((p, i) => { if (p.b < DATA[minI].b) minI = i; });
+  svg.appendChild(el('circle', {
+    cx: x(minI), cy: y(DATA[minI].b), r: 4,
+    fill: 'var(--series-1)', stroke: 'var(--surface-1)', 'stroke-width': 2
+  }));
+  const minLabel = el('text', {
+    x: x(minI), y: y(DATA[minI].b) - 12, 'text-anchor': 'middle',
+    fill: 'var(--text-secondary)', 'font-size': 11
+  });
+  minLabel.textContent = DATA[minI].d.slice(5) + ' · ' + fmt(DATA[minI].b);
+  svg.appendChild(minLabel);
+
+  // end marker
+  const last = DATA[DATA.length - 1];
+  svg.appendChild(el('circle', {
+    cx: x(DATA.length - 1), cy: y(last.b), r: 4,
+    fill: 'var(--series-1)', stroke: 'var(--surface-1)', 'stroke-width': 2
+  }));
+
+  // hover layer
+  const cross = el('line', {
+    x1: 0, x2: 0, y1: M.t, y2: M.t + PH,
+    stroke: 'var(--muted)', 'stroke-width': 1, opacity: 0
+  });
+  const hoverDot = el('circle', {
+    cx: 0, cy: 0, r: 4, fill: 'var(--series-1)',
+    stroke: 'var(--surface-1)', 'stroke-width': 2, opacity: 0
+  });
+  svg.appendChild(cross);
+  svg.appendChild(hoverDot);
+
+  const overlay = el('rect', {
+    x: M.l, y: M.t, width: PW, height: PH, fill: 'transparent'
+  });
+  svg.appendChild(overlay);
+
+  function show(evt) {
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const step = PW / (DATA.length - 1);
+    let i = Math.round((loc.x - M.l) / step);
+    i = Math.max(0, Math.min(DATA.length - 1, i));
+    const p = DATA[i];
+    const px = x(i), py = y(p.b);
+    cross.setAttribute('x1', px); cross.setAttribute('x2', px); cross.setAttribute('opacity', 0.7);
+    hoverDot.setAttribute('cx', px); hoverDot.setAttribute('cy', py); hoverDot.setAttribute('opacity', 1);
+
+    const rect = svg.getBoundingClientRect();
+    const scale = rect.width / W;
+    tooltip.style.left = (px * scale) + 'px';
+    tooltip.style.top = (py * scale - 10) + 'px';
+    const st = status(p.b);
+    tooltip.innerHTML =
+      '<div class="tt-date">' + p.d + ' ' + weekday(p.d) + '</div>' +
+      '<div class="tt-value">' + fmt(p.b) + '</div>' +
+      '<div class="tt-meta">站上均线 ' + p.a + ' / ' + p.n + '</div>' +
+      '<div class="tt-status"><span class="pill ' + st.cls + '">' + st.text + '</span></div>';
+    tooltip.style.opacity = 1;
+  }
+  function hide() {
+    cross.setAttribute('opacity', 0);
+    hoverDot.setAttribute('opacity', 0);
+    tooltip.style.opacity = 0;
+  }
+  overlay.addEventListener('pointermove', show);
+  overlay.addEventListener('pointerenter', show);
+  overlay.addEventListener('pointerleave', hide);
+}
+
+function fillStats() {
+  const last = DATA[DATA.length - 1];
+  const prev = DATA[DATA.length - 2];
+  const delta = last.b - prev.b;
+  document.getElementById('heroValue').textContent = fmt(last.b);
+  const deltaEl = document.getElementById('heroDelta');
+  deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + 'pp 较前一日';
+  deltaEl.style.color = delta >= 0 ? 'var(--good)' : 'var(--critical)';
+
+  const vals = DATA.map(p => p.b);
+  const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
+  let min = DATA[0], max = DATA[0];
+  DATA.forEach(p => { if (p.b < min.b) min = p; if (p.b > max.b) max = p; });
+  document.getElementById('statAvg').textContent = avg.toFixed(2) + '%';
+  document.getElementById('statMin').textContent = fmt(min.b);
+  document.getElementById('statMinDate').textContent = min.d;
+  document.getElementById('statMax').textContent = fmt(max.b);
+  document.getElementById('statMaxDate').textContent = max.d;
+  document.getElementById('statAbove50').textContent = DATA.filter(p => p.b >= 50).length + ' / ' + DATA.length;
+}
+
+function fillTable() {
+  const body = document.getElementById('tableBody');
+  const rows = DATA.map((p, i) => ({ ...p, prev: i > 0 ? DATA[i - 1].b : null })).reverse();
+  body.innerHTML = rows.map(p => {
+    const st = status(p.b);
+    const delta = p.prev === null ? '—' : ((p.b - p.prev >= 0 ? '+' : '') + (p.b - p.prev).toFixed(2) + 'pp');
+    return '<tr>' +
+      '<td>' + p.d + '</td>' +
+      '<td class="num">' + fmt(p.b) + '</td>' +
+      '<td class="num">' + p.a + '</td>' +
+      '<td class="num">' + p.n + '</td>' +
+      '<td class="num">' + delta + '</td>' +
+      '<td><span class="pill ' + st.cls + '">' + st.text + '</span></td>' +
+      '</tr>';
+  }).join('');
+}
+
+const themeBtn = document.getElementById('themeBtn');
+function syncThemeButton() {
+  const dark = document.documentElement.dataset.theme === 'dark' ||
+    (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  themeBtn.textContent = dark ? '浅色' : '深色';
+}
+themeBtn.addEventListener('click', () => {
+  const dark = document.documentElement.dataset.theme === 'dark' ||
+    (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+  syncThemeButton();
+});
+
+build();
+fillStats();
+fillTable();
+syncThemeButton();
+</script>
+</body>
+</html>

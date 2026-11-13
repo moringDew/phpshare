@@ -1,0 +1,80 @@
+# A 股行情接入说明
+
+## 免费通达信官方日线
+
+已接入通达信官网发布的沪深京日线完整包，并从 ZIP 中直接解析 `.day` 文件，无需安装客户端或付费 Token。官方说明该包包含A股、B股、指数、基金和可转债等盘后日线；平台只提取沪深主板和创业板。
+
+当前原始层覆盖2023-01-03至2026-11-10，共4,941只证券、4,218,970条记录。文件清单和哈希见 `data/tdx/MANIFEST.md`。
+
+通达信日线包为未复权价格，可用于原始行情、停牌缺口和收盘价校验；正式回测必须再合并复权因子、历史名称/ST状态和证券状态。解析命令：
+
+```powershell
+$env:PYTHONPATH = "backend"
+python -m market_data.tdx_cli --zip data/tdx/hsjday.zip --output data/tdx/a_share_raw.csv --start 2023-01-01
+```
+
+## 免费复权与历史ST层
+
+BaoStock用于补充前复权收盘价、成交额、历史ST和交易状态，按证券保存为Parquet并支持断点续传。同步使用本机Anaconda环境：
+
+```powershell
+$env:PYTHONPATH = "backend"
+& "D:\app\annaconda\python.exe" -m market_data.baostock_sync `
+  --tdx-zip data/tdx/hsjday.zip `
+  --output data/baostock/symbols `
+  --start 2023-01-01 `
+  --workers 48
+```
+
+通达信文件提供历史证券全集和原始行情，BaoStock分区提供复权和历史状态。两个来源需在最新交易日执行收盘价交叉校验后发布为策略数据版本。
+
+## 当前数据源
+
+第一版使用 Tushare Pro API，同步沪深主板和创业板的股票基础信息、交易日历、日线行情和复权因子。Token 从环境变量读取，不写入配置文件或代码库。
+
+券商的主板、创业板交易权限不等于行情 API 权限。Tushare 账号、Token 和相应接口积分需由使用者自行开通。
+
+## 股票范围
+
+纳入：
+
+- 上海主板：`600/601/603/605` 开头且后缀 `.SH`。
+- 深圳主板：`000/001/002/003` 开头且后缀 `.SZ`。
+- 创业板：`300/301` 开头且后缀 `.SZ`。
+
+排除科创板、北交所、B 股以及不能识别的证券代码。选股阶段继续排除当前 ST、停牌、上市时间不足和流动性不足的股票。
+
+## 同步方法
+
+在 PowerShell 中临时设置 Token，关闭窗口后失效：
+
+```powershell
+cd quant-platform
+$env:PYTHONPATH = "backend"
+$env:TUSHARE_TOKEN = "你的Token"
+python -m market_data.sync_cli --start 2018-01-01 --end 2026-11-10 --output data/a_share_daily.csv
+```
+
+随后运行回测和选股：
+
+```powershell
+python -m stock_selection.cli --input data/a_share_daily.csv --config configs/stock_selection.json --output output/backtest.json
+```
+
+建议至少同步一个完整牛熊周期，并另留最近一段数据作为样本外验证。首次全量同步会产生较多 API 请求，应遵守账号对应的频率和积分限制。
+
+## 数据口径
+
+- CSV 保存原始收盘价、成交股数和复权因子。
+- 流动性使用原始收盘价乘成交股数。
+- 收益、动量和趋势使用 `原始收盘价 × 复权因子`。
+- Tushare 日线成交量的单位为手，接入层转换为股。
+- 复权因子缺失的记录不会进入研究数据。
+
+## 已知限制
+
+- 当前 ST 标识来自最新证券名称，不能完整还原历史 ST 区间；正式策略验证需要接入历史证券简称或风险警示状态。
+- 停牌日通常没有日线记录，回测将持仓该日收益按零处理，但订单成交约束仍需在下一阶段增强。
+- 免费或低积分账号可能受到调用频率和接口权限限制。
+- 数据同步失败后应按交易日断点续传；当前 MVP 会重新生成目标 CSV，断点能力尚未实现。
+

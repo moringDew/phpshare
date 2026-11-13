@@ -1,0 +1,46 @@
+{
+  "allowed_boards": [
+    "main",
+    "chinext"
+  ],
+  "top_n": 5,
+  "rebalance_days": 20,
+  "minimum_history": 121,
+  "minimum_listing_days": 120,
+  "minimum_close": 2.0,
+  "minimum_average_turnover": 20000000.0,
+  "transaction_cost_rate": 0.0015,
+  "momentum_windows": [
+    20,
+    60,
+    120
+  ],
+  "volatility_window": 60,
+  "drawdown_window": 60,
+  "minimum_momentum_120": 0.0,
+  "maximum_annualized_volatility": 0.65,
+  "maximum_current_drawdown": 0.25,
+  "market_breadth_lookback": 60,
+  "minimum_market_breadth": 0.5,
+  "maximum_equity_exposure": 0.4,
+  "initial_capital": 100000.0,
+  "cash_yield_annual": 0.015,
+  "strategy_start": "2026-10-01",
+  "lot_size": 100,
+  "maximum_single_position": 0.1,
+  "weights": {
+    "momentum_20": 0.18,
+    "momentum_60": 0.24,
+    "momentum_120": 0.12,
+    "trend": 0.1,
+    "low_volatility": 0.14,
+    "low_drawdown": 0.1,
+    "liquidity": 0.04,
+    "roe": 0.04,
+    "revenue_growth": 0.03,
+    "low_debt": 0.01
+  },
+  "minimum_annual_return": 0.12,
+  "maximum_drawdown": 0.15,
+  "minimum_period_win_rate": 0.55
+}

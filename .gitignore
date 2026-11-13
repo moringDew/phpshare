@@ -1,0 +1,14 @@
+.secrets/
+output/
+__pycache__/
+*.pyc
+data/tdx/*.zip
+data/tdx/*.csv
+data/baostock/
+data/cnequity/
+data/cnequity-demo/
+data/a_share_cnequity.csv
+data/a_share_public*.csv
+data/a_share_daily.csv
+vendor/
+

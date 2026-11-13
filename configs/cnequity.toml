@@ -1,0 +1,17 @@
+# CNEquity lake config.
+#
+# Only settings that differ from the built-in defaults belong here. The defaults
+# ship with the installed version, so a later release's new schedule steps and
+# settings apply without editing this file.
+#
+#   cne config show             the effective configuration, marking what this file sets
+#   cne config show --defaults  every setting with its default and an explanation
+#
+# A schedule group can swap one step without freezing the rest of it:
+#   [job.daily.groups.capital]
+#   steps_remove = ["fund_flow"]
+#   steps_add = ["fund_flow_ths"]
+extends = "builtin"
+
+[data]
+root = "C:/Users/kane/Documents/WeChat Files/wxid_xsdfdlvetmoa22/FileStorage/File/2025-06/website/website/quant-platform/data/cnequity"
