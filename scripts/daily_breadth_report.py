@@ -31,7 +31,7 @@ PUSH_CONFIG = ROOT / ".secrets" / "push_config.json"
 HISTORY_CSV = ROOT / "output" / "breadth_history.csv"
 LATEST_JSON = ROOT / "output" / "breadth_latest.json"
 LAST_PUSH = ROOT / "output" / "last_breadth_push.json"
-REPORT_DIR = ROOT / "docs" / "breadth_reports"
+REPORT_DIR = ROOT / "docs" / "市场广度日报"
 
 FIELDS = ["date", "symbol", "close", "volume", "adj_factor", "listing_days", "is_st", "suspended"]
 TENCENT_URL = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={prefix}{code},day,,,12,qfq"

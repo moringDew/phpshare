@@ -24,7 +24,7 @@ OUT_STRATEGY_CSV = ROOT / "output" / "trades_strategy_20261113.csv"
 OUT_RESEARCH_CSV = ROOT / "output" / "trades_research_20261113.csv"
 OUT_ROUND_STRATEGY_CSV = ROOT / "output" / "round_trips_strategy_20261113.csv"
 OUT_ROUND_RESEARCH_CSV = ROOT / "output" / "round_trips_research_20261113.csv"
-OUT_MD = ROOT / "docs" / "TRADE_HISTORY.md"
+OUT_MD = ROOT / "docs" / "交割历史单.md"
 
 
 def fetch_names(symbols: List[str]) -> Dict[str, str]:
