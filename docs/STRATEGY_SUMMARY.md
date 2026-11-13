@@ -179,6 +179,10 @@
 | `scripts/run_daily_breadth.ps1` | 定时任务包装脚本 |
 | `scripts/register_daily_task.ps1` | 注册 Windows 定时任务 |
 | `scripts/optimize_topn_grid.py` | 扩展持股数网格（未完成） |
+| `scripts/export_trade_history.py` | 交割历史单导出脚本 |
+| `docs/TRADE_HISTORY.md` | 交割历史单汇总（模拟盘 + 研究回测） |
+| `output/trades_strategy_20261113.csv` | 策略模拟盘成交明细 |
+| `output/trades_research_20261113.csv` | 研究回测成交明细 |
 | `data/a_share_public.csv` | 原始公开行情，截至 11-10 |
 | `data/a_share_public_20261113.csv` | 拼接后行情，截至 11-13 |
 | `data/a_share_public_latest.csv` | 每日更新使用的数据文件 |
