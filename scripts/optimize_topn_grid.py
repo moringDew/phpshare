@@ -8,6 +8,8 @@ from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from render_strategy_summary import render_document
 if str(ROOT / "backend") not in sys.path:
     sys.path.insert(0, str(ROOT / "backend"))
 
@@ -18,7 +20,7 @@ TRAIN_START = date(2024, 2, 8)
 TRAIN_END = date(2025, 12, 31)
 TEST_START = date(2026, 1, 1)
 OUT_JSON = ROOT / "output" / "optimization_topn_20261113.json"
-OUT_MD = ROOT / "docs" / "OPTIMIZATION_TOPN.md"
+OUT_MD = ROOT / "docs" / "md" / "OPTIMIZATION_TOPN.md"
 
 
 def main() -> int:
@@ -156,7 +158,9 @@ def main() -> int:
             "",
         ]
     )
+    OUT_MD.parent.mkdir(parents=True, exist_ok=True)
     OUT_MD.write_text("\n".join(lines), encoding="utf-8")
+    render_document(OUT_MD)
 
     print(json.dumps({"best": best["params"], "train": [best["train_return"], best["train_drawdown"]],
                       "test": [test.total_return, test.maximum_drawdown],

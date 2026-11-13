@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A 股量化交易平台技术方案</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>A 股量化交易平台技术方案 · 目录</strong><a href="#section-1">1. 建设目标</a><a href="#section-2">2. 功能模块</a><a href="#section-3">3. 总体架构</a><a href="#section-4">4. 技术选型</a><a href="#section-5">5. 数据存储分工</a><a href="#section-6">6. MySQL 设计要求</a><a href="#section-7">7. 行情数据与版本</a><a href="#section-8">8. 策略模型</a><a href="#section-9">9. 回测与撮合</a><a href="#section-10">10. 订单、账户与账本</a><a href="#section-11">11. 风控</a><a href="#section-12">12. API</a><a href="#section-13">13. 安全与合规</a><a href="#section-14">14. 部署与监控</a><a href="#section-15">15. 测试与验收</a><a href="#section-16">16. 开发计划</a><a href="#section-17">17. 待确认项</a><a href="#section-18">18. 当前实现状态</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E6%8A%80%E6%9C%AF%E8%AE%BE%E8%AE%A1.md">技术设计.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">A 股量化交易平台技术方案</h1>
+<blockquote>版本：V1.1<br>状态：第一阶段开发中<br>更新日期：2026-11-10<br>默认范围：单用户、A 股日线、历史回测、模拟交易，预留实盘接口。</blockquote>
+<h2 id="section-1">1. 建设目标</h2>
+<p>平台提供行情管理、股票池、策略版本、历史回测、模拟交易、账户持仓和统一风控。第一阶段建立“数据导入—策略配置—历史回测—结果分析—模拟运行”闭环；实盘作为独立里程碑。</p>
+<p>首版不包含高频交易、融资融券、期权、公开跟单和多券商交易。</p>
+<h2 id="section-2">2. 功能模块</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>模块</th>
+<th>主要功能</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">工作台</td><td style="text-align:left">资产、收益、回撤、策略状态、持仓、告警</td></tr>
+<tr><td style="text-align:left">行情中心</td><td style="text-align:left">股票资料、日 K 线、交易日历、数据质量与版本</td></tr>
+<tr><td style="text-align:left">股票池</td><td style="text-align:left">静态名单、指数成分、历史成员</td></tr>
+<tr><td style="text-align:left">策略中心</td><td style="text-align:left">模板、参数、版本、运行状态</td></tr>
+<tr><td style="text-align:left">回测中心</td><td style="text-align:left">异步任务、绩效、净值、成交、结果比较</td></tr>
+<tr><td style="text-align:left">模拟交易</td><td style="text-align:left">模拟账户、委托、成交、撤单、资金与持仓</td></tr>
+<tr><td style="text-align:left">风控中心</td><td style="text-align:left">仓位、金额、频率、回撤、黑名单、紧急停止</td></tr>
+<tr><td style="text-align:left">系统管理</td><td style="text-align:left">用户权限、数据源、费用、任务、审计日志</td></tr>
+</tbody></table></div>
+<p>首批策略建议为双均线、横截面动量和指数定期再平衡。策略输出信号或目标仓位，由组合模块生成订单。</p>
+<h2 id="section-3">3. 总体架构</h2>
+<pre><code class="language-mermaid">flowchart TD
+  UI[Vue 3 工作台] --&gt; API[FastAPI 服务]
+  API --&gt; MYSQL[(MySQL 8.0 业务库)]
+  API --&gt; REDIS[(Redis 缓存与队列)]
+  REDIS --&gt; WORKER[Celery 计算进程]
+  SOURCE[CSV / 行情供应商] --&gt; INGEST[导入与质量检查]
+  INGEST --&gt; LAKE[(Parquet 行情仓库)]
+  LAKE --&gt; DUCK[DuckDB 查询]
+  DUCK --&gt; WORKER
+  WORKER --&gt; ENGINE[策略与回测引擎]
+  ENGINE --&gt; RISK[统一风控]
+  RISK --&gt; PAPER[模拟撮合]
+  RISK -. 后续 .-&gt; GATEWAY[券商网关]
+  PAPER --&gt; MYSQL
+  GATEWAY --&gt; MYSQL</code></pre>
+<p>后端采用模块化单体，回测和数据任务进入独立 Worker。券商网关以后使用独立进程，避免研究任务影响交易链路。</p>
+<h2 id="section-4">4. 技术选型</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>层级</th>
+<th>技术</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">前端</td><td style="text-align:left">Vue 3、TypeScript、Vite、Element Plus、ECharts</td></tr>
+<tr><td style="text-align:left">API</td><td style="text-align:left">Python 3.12、FastAPI、Pydantic、SQLAlchemy</td></tr>
+<tr><td style="text-align:left">数据库</td><td style="text-align:left">MySQL 8.0、InnoDB</td></tr>
+<tr><td style="text-align:left">迁移</td><td style="text-align:left">Alembic 或 Flyway，项目启动时二选一</td></tr>
+<tr><td style="text-align:left">行情分析</td><td style="text-align:left">Parquet、DuckDB、pandas、NumPy</td></tr>
+<tr><td style="text-align:left">异步任务</td><td style="text-align:left">Celery、Redis</td></tr>
+<tr><td style="text-align:left">部署</td><td style="text-align:left">Docker Compose、Nginx</td></tr>
+<tr><td style="text-align:left">监控</td><td style="text-align:left">Prometheus、Grafana、结构化日志</td></tr>
+</tbody></table></div>
+<p>选择 MySQL 的正式记录见 <a href="%E6%95%B0%E6%8D%AE%E5%BA%93%E9%80%89%E5%9E%8B.html">数据库选型.md</a>。团队熟悉度是主要依据；大规模行情查询由 DuckDB 承担。</p>
+<h2 id="section-5">5. 数据存储分工</h2>
+<ul>
+<li><p>MySQL：用户、权限、策略元数据、回测任务与摘要、账户、订单、成交、持仓、资金流水、风控事件、审计日志。</p></li>
+<li><p>Parquet：日线、复权因子、公司行动和批量因子数据，按数据集、市场、年份分区。</p></li>
+<li><p>DuckDB：直接分析 Parquet，执行批量研究查询。</p></li>
+<li><p>Redis：缓存、分布式锁和任务消息，不保存最终账本。</p></li>
+</ul>
+<p>核心实体包括 <code>instrument</code>、<code>trading_calendar</code>、<code>dataset_version</code>、<code>universe</code>、<code>strategy_version</code>、<code>backtest_run</code>、<code>account</code>、<code>order</code>、<code>trade</code>、<code>position</code>、<code>cash_ledger</code>、<code>risk_event</code> 和 <code>audit_log</code>。</p>
+<p>金额和价格使用 <code>DECIMAL</code>。订单、成交和资金流水为不可变记录；持仓是可以由账本重建的当前快照。</p>
+<h2 id="section-6">6. MySQL 设计要求</h2>
+<ul>
+<li><p>默认引擎 InnoDB，字符集 <code>utf8mb4</code>。</p></li>
+<li><p>订单客户端编号建立账户内唯一索引，避免重复下单。</p></li>
+<li><p>外键用于稳定核心关系；高吞吐明细表是否使用外键在压测后决定。</p></li>
+<li><p>账户与持仓更新采用版本号或带条件更新，防止并发覆盖。</p></li>
+<li><p>事务代码保持短小，并按账户、证券、订单的固定顺序加锁。</p></li>
+<li><p>捕获死锁并对幂等事务进行有限次数重试。</p></li>
+<li><p>高频增长表按日期或账户评估分区，不能只为了“可能变大”提前分区。</p></li>
+<li><p>复杂回测明细可以输出 Parquet，MySQL 保存索引、摘要和访问位置。</p></li>
+</ul>
+<h2 id="section-7">7. 行情数据与版本</h2>
+<p>统一数据适配器隔离供应商差异。导入流程为：原始文件留存、字段映射、类型检查、交易日对齐、重复与缺失检测、生成版本、发布版本。</p>
+<p>检查内容包括代码与日期唯一性、OHLC 关系、负值、非交易日记录、缺失交易日、停牌、除权除息以及上市退市状态。</p>
+<p>数据修订生成新版本，不覆盖已用于回测的数据。每次回测保存数据版本、策略版本、参数、费用和撮合规则，确保结果可复现。</p>
+<h2 id="section-8">8. 策略模型</h2>
+<p>策略读取当前时间之前可见的行情、股票池、账户快照和参数，输出目标权重、目标仓位或交易信号。策略不能直接调用模拟或实盘网关。</p>
+<p>策略版本由代码哈希、参数结构、依赖环境和创建时间确定。第一版只运行内置模板；以后开放 Python 策略时必须使用隔离容器，并限制 CPU、内存、运行时间、网络和依赖。</p>
+<h2 id="section-9">9. 回测与撮合</h2>
+<p>每个交易日依次执行：装载证券状态、处理公司行动、处理待成交订单、更新账户、向策略发布可见数据、计算信号、生成订单、执行风控、记录日终状态。</p>
+<p>日线策略默认使用 T 日收盘数据产生信号，在 T+1 日按照配置的开盘价或成交模型撮合，避免未来数据。</p>
+<p>撮合模型至少处理：</p>
+<ul>
+<li><p>停牌、涨跌停和无涨跌幅限制状态。</p></li>
+<li><p>可卖数量与买入后的可卖时间。</p></li>
+<li><p>最小申报单位及卖出余股。</p></li>
+<li><p>限价、滑点、成交量参与率和部分成交。</p></li>
+<li><p>佣金、印花税、过户费及其生效日期。</p></li>
+<li><p>主板、创业板、科创板和特殊证券规则差异。</p></li>
+</ul>
+<p>规则按交易所、板块、证券类型和生效日期配置，不能将当前规则硬编码到所有历史时期。参考：<a href="https://www.sse.com.cn/lawandrules/sselawsrules2025/stocks/exchange/c/c_20260424_10816482.shtml">上交所交易规则（2026 年修订）</a>。</p>
+<p>回测报告包含累计和年化收益、波动率、最大回撤、夏普、索提诺、Calmar、胜率、盈亏比、换手率、费用、集中度及相对基准收益。</p>
+<h2 id="section-10">10. 订单、账户与账本</h2>
+<p>订单状态：<code>CREATED → RISK_REJECTED / ACCEPTED → PARTIALLY_FILLED → FILLED / CANCELLED / EXPIRED</code>。状态迁移写入订单事件表。</p>
+<p>成交驱动资金和持仓记账。一笔成交涉及的成交记录、订单累计量、资金流水和持仓更新必须在同一数据库事务中完成；无法同步完成的外部回报采用 Inbox 表去重并在本地事务中处理。</p>
+<p>日终校验订单与成交汇总、资金与流水、持仓与成交、平台与券商账户快照。差异进入告警，不自动修改历史流水。</p>
+<h2 id="section-11">11. 风控</h2>
+<p>事前检查证券状态、资金、可卖数量、单笔金额、个股和行业仓位、价格偏离、频率和黑名单。事中监控成交额、撤单率、连续拒单、策略亏损、账户回撤、数据延迟和网关心跳。事后完成对账、风险暴露和审计复核。</p>
+<p>紧急停止支持策略、账户和系统三级，阻止新订单并尝试撤销可撤订单。是否卖出持仓由单独指令决定。</p>
+<h2 id="section-12">12. API</h2>
+<p>接口前缀 <code>/api/v1</code>，关键写请求包含请求 ID 和幂等键：</p>
+<pre><code class="language-text">GET    /instruments
+GET    /market-data/bars
+POST   /data-imports
+POST   /strategies
+POST   /strategies/{id}/versions
+POST   /backtests
+GET    /backtests/{id}/report
+POST   /paper-accounts
+POST   /strategy-runs
+POST   /strategy-runs/{id}/stop
+GET    /accounts/{id}/positions
+GET    /accounts/{id}/orders
+POST   /orders/{id}/cancel
+GET    /risk-events
+GET    /audit-logs</code></pre>
+<p>回测返回 <code>202 Accepted</code> 和任务 ID。任务状态为 <code>PENDING、RUNNING、SUCCEEDED、FAILED、CANCELLED</code>。</p>
+<h2 id="section-13">13. 安全与合规</h2>
+<p>使用 HTTPS、密码哈希、短期令牌、RBAC 和后端权限校验。密钥通过环境或密钥服务注入；日志不得记录密码、完整令牌和券商密钥。关键操作保存不可篡改的审计记录，并定期备份和验证恢复。</p>
+<p>实盘前需根据券商和现行规则完成程序化交易报告等事项。参考：<a href="https://www.sse.com.cn/lawandrules/sselawsrules2025/trade/universal/c/c_20250612_10781696.shtml">上交所程序化交易管理实施细则</a>和<a href="https://www.csrc.gov.cn/csrc/c100028/c7480577/content.shtml">证监会程序化交易管理规定</a>。</p>
+<h2 id="section-14">14. 部署与监控</h2>
+<p>Docker Compose 包含 <code>web、api、worker、scheduler、mysql、redis、nginx</code>。开发、测试、模拟生产和实盘生产使用不同数据库、密钥和账户。</p>
+<p>监控 API 延迟、错误率、队列长度、回测耗时、行情更新时间、策略心跳、订单延迟、拒单率、对账差异、MySQL 连接数、锁等待、死锁和慢查询。</p>
+<h2 id="section-15">15. 测试与验收</h2>
+<ul>
+<li><p>单元测试费用、仓位、复权、指标和风控规则。</p></li>
+<li><p>固定小数据集回归测试订单、成交、净值和指标。</p></li>
+<li><p>验证同一版本和参数的回测结果一致。</p></li>
+<li><p>验证停牌、涨跌停、可卖数量、部分成交和重复请求。</p></li>
+<li><p>验证资金与持仓账本守恒。</p></li>
+<li><p>测试 Worker 中断、Redis 重启、MySQL 死锁、网关断线和回报重复。</p></li>
+<li><p>验证权限和审计覆盖关键操作。</p></li>
+</ul>
+<h2 id="section-16">16. 开发计划</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>阶段</th>
+<th>建议周期</th>
+<th>交付</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">需求确认</td><td style="text-align:right">2–3 天</td><td style="text-align:left">用户、数据源、频率、策略和部署确认</td></tr>
+<tr><td style="text-align:left">基础框架</td><td style="text-align:right">1 周</td><td style="text-align:left">前后端、MySQL、权限、队列、部署</td></tr>
+<tr><td style="text-align:left">数据中心</td><td style="text-align:right">1–2 周</td><td style="text-align:left">证券资料、日线导入、版本与质量报告</td></tr>
+<tr><td style="text-align:left">回测闭环</td><td style="text-align:right">2–3 周</td><td style="text-align:left">策略、事件引擎、撮合、费用和报告</td></tr>
+<tr><td style="text-align:left">模拟交易</td><td style="text-align:right">2 周</td><td style="text-align:left">账户、订单、账本、风控和对账</td></tr>
+<tr><td style="text-align:left">稳定验收</td><td style="text-align:right">1 周</td><td style="text-align:left">回归、故障、性能、安全与运维文档</td></tr>
+<tr><td style="text-align:left">实盘接入</td><td style="text-align:right">另行评估</td><td style="text-align:left">券商网关、合规、联调和小额灰度</td></tr>
+</tbody></table></div>
+<h2 id="section-17">17. 待确认项</h2>
+<p>开发前仍需确认：单人或多人、日线或分钟线、数据源、首批策略与基准、部署环境、是否已有券商接口、是否计划实盘。</p>
+<p>未确认时采用：单用户、日线、CSV/Parquet、沪深 A 股、内置策略、本地 Docker、MySQL 8.0、模拟交易。</p>
+<h2 id="section-18">18. 当前实现状态</h2>
+<p>已实现 <code>backend/stock_selection</code> 选股研究核心：</p>
+<ul>
+<li><p>CSV 日线加载与字段校验。</p></li>
+<li><p>ST、停牌、上市天数、价格和流动性过滤。</p></li>
+<li><p>动量、趋势、低波动、低回撤、流动性和可选质量因子排名。</p></li>
+<li><p>定期等权调仓、交易成本、净值和绩效计算。</p></li>
+<li><p>年化收益、最大回撤和调仓周期胜率门槛检查。</p></li>
+<li><p>最新选股及因子明细 JSON 输出。</p></li>
+<li><p>基础回归测试。</p></li>
+<li><p>沪深主板与创业板权限股票池过滤。</p></li>
+<li><p>Tushare 股票资料、交易日历、日线和复权因子同步适配器。</p></li>
+</ul>
+<p>默认门槛为年化收益 12%、最大回撤 15%、调仓周期胜率 55%。门槛可以配置，是否通过必须在多市场阶段和独立样本外数据中验证，不能用作未来收益承诺。</p></main></div></body></html>

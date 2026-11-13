@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A 股选股结果（2026-11-13）</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>A 股选股结果（2026-11-13） · 目录</strong><a href="#section-1">市场广度与风险状态</a><a href="#section-2">最新排名（2026-11-13，仅排名，不是调仓指令）</a><a href="#section-3">回测指标（截至 2026-11-13）</a><a href="#section-4">组合跟踪</a><a href="#section-8">风控状态</a><a href="#section-9">数据与使用限制</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E9%80%89%E8%82%A1%E6%8A%A5%E5%91%8A_2026-11-13.md">选股报告_2026-11-13.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">A 股选股结果（2026-11-13）</h1>
+<blockquote>生成日期：2026-11-13<br>数据区间：2023-08-15 至 2026-11-13<br>数据来源：2023-08-15～2026-11-10 为公开行情备用源（东方财富）；2026-11-11～2026-11-13 为腾讯前复权日线，按 11-10 收盘比例拼接<br>股票范围：沿用 11-10 的 500 只沪深主板及创业板候选池<br>数据文件：<code>data/a_share_public_20261113.csv</code><br>结构化结果：<code>output/selection_20261113.json</code></blockquote>
+<h2 id="section-1">市场广度与风险状态</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>日期</th>
+<th>市场广度</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">2026-11-06（上次调仓）</td><td style="text-align:right">41.38%</td></tr>
+<tr><td style="text-align:left">2026-11-10</td><td style="text-align:right">47.06%</td></tr>
+<tr><td style="text-align:left">2026-11-13</td><td style="text-align:right"><strong>40.16%</strong></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr>
+<th>配置</th>
+<th>广度门槛</th>
+<th>11-13 状态</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">优化版 <code>stock_selection_optimized.json</code></td><td style="text-align:right">40%</td><td style="text-align:left">风险开（仅高出 0.16 个百分点）</td></tr>
+<tr><td style="text-align:left">报告版 <code>stock_selection.json</code></td><td style="text-align:right">50%</td><td style="text-align:left">空仓</td></tr>
+</tbody></table></div>
+<p>两套配置当前恰好落在门槛两侧，信号不可混用。</p>
+<h2 id="section-2">最新排名（2026-11-13，仅排名，不是调仓指令）</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>排名</th>
+<th>代码</th>
+<th>名称</th>
+<th>得分</th>
+</tr></thead><tbody>
+<tr><td style="text-align:right">1</td><td style="text-align:left">600887.SH</td><td style="text-align:left">伊利股份</td><td style="text-align:right">0.8358</td></tr>
+<tr><td style="text-align:right">2</td><td style="text-align:left">601328.SH</td><td style="text-align:left">交通银行</td><td style="text-align:right">0.8125</td></tr>
+<tr><td style="text-align:right">3</td><td style="text-align:left">601169.SH</td><td style="text-align:left">北京银行</td><td style="text-align:right">0.7954</td></tr>
+<tr><td style="text-align:right">4</td><td style="text-align:left">601398.SH</td><td style="text-align:left">工商银行</td><td style="text-align:right">0.7745</td></tr>
+<tr><td style="text-align:right">5</td><td style="text-align:left">601939.SH</td><td style="text-align:left">建设银行</td><td style="text-align:right">0.7554</td></tr>
+<tr><td style="text-align:right">6</td><td style="text-align:left">601988.SH</td><td style="text-align:left">中国银行</td><td style="text-align:right">0.7415</td></tr>
+<tr><td style="text-align:right">7</td><td style="text-align:left">601599.SH</td><td style="text-align:left">浙文影业</td><td style="text-align:right">0.7201</td></tr>
+<tr><td style="text-align:right">8</td><td style="text-align:left">600977.SH</td><td style="text-align:left">中国电影</td><td style="text-align:right">0.7178</td></tr>
+<tr><td style="text-align:right">9</td><td style="text-align:left">600919.SH</td><td style="text-align:left">江苏银行</td><td style="text-align:right">0.7147</td></tr>
+<tr><td style="text-align:right">10</td><td style="text-align:left">601166.SH</td><td style="text-align:left">兴业银行</td><td style="text-align:right">0.6793</td></tr>
+</tbody></table></div>
+<p>与 11-10 的名单相比，因子明显转向低波动、趋势稳定的大金融：10 只中有 7 只银行。</p>
+<p>下一次调仓日为 <strong>2026-12-04</strong>（11-06 之后第 20 个交易日），11-13 不是调仓日。</p>
+<h2 id="section-3">回测指标（截至 2026-11-13）</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>指标</th>
+<th>优化版（40%）</th>
+<th>报告版（50%）</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">年化收益率</td><td style="text-align:right">23.05%</td><td style="text-align:right">17.44%</td></tr>
+<tr><td style="text-align:left">最大回撤</td><td style="text-align:right">13.59%</td><td style="text-align:right">13.59%</td></tr>
+<tr><td style="text-align:left">调仓胜率</td><td style="text-align:right">72.73%</td><td style="text-align:right">72.22%</td></tr>
+<tr><td style="text-align:left">夏普比率</td><td style="text-align:right">1.65</td><td style="text-align:right">1.37</td></tr>
+<tr><td style="text-align:left">期末净值</td><td style="text-align:right">1.7285</td><td style="text-align:right">1.5284</td></tr>
+</tbody></table></div>
+<h2 id="section-4">组合跟踪</h2>
+<h3 id="section-5">优化版 11-06 调仓组合</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>代码</th>
+<th>名称</th>
+<th>自 11-06</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">601599.SH</td><td style="text-align:left">浙文影业</td><td style="text-align:right">-0.79%</td></tr>
+<tr><td style="text-align:left">600887.SH</td><td style="text-align:left">伊利股份</td><td style="text-align:right">+0.92%</td></tr>
+<tr><td style="text-align:left">600261.SH</td><td style="text-align:left">阳光照明</td><td style="text-align:right">+6.11%</td></tr>
+<tr><td style="text-align:left">002275.SZ</td><td style="text-align:left">桂林三金</td><td style="text-align:right">-20.40%</td></tr>
+<tr><td style="text-align:left">601939.SH</td><td style="text-align:left">建设银行</td><td style="text-align:right">+1.68%</td></tr>
+<tr><td style="text-align:left">001219.SZ</td><td style="text-align:left">青岛食品</td><td style="text-align:right">-7.51%</td></tr>
+<tr><td style="text-align:left">601188.SH</td><td style="text-align:left">龙江交通</td><td style="text-align:right">+12.86%</td></tr>
+<tr><td style="text-align:left">601328.SH</td><td style="text-align:left">交通银行</td><td style="text-align:right">+3.37%</td></tr>
+<tr><td style="text-align:left">300760.SZ</td><td style="text-align:left">迈瑞医疗</td><td style="text-align:right">-1.89%</td></tr>
+<tr><td style="text-align:left">600977.SH</td><td style="text-align:left">中国电影</td><td style="text-align:right">+6.50%</td></tr>
+</tbody></table></div>
+<ul>
+<li><p>等权收益：<strong>+0.09%</strong></p></li>
+<li><p>按 45% 总仓位对总资金影响：<strong>+0.04%</strong></p></li>
+</ul>
+<h3 id="section-6">11-10 候选名单（非实际持仓）</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>代码</th>
+<th>名称</th>
+<th>自 11-10</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">601599.SH</td><td style="text-align:left">浙文影业</td><td style="text-align:right">-10.00%</td></tr>
+<tr><td style="text-align:left">001219.SZ</td><td style="text-align:left">青岛食品</td><td style="text-align:right">-17.20%</td></tr>
+<tr><td style="text-align:left">601188.SH</td><td style="text-align:left">龙江交通</td><td style="text-align:right">-6.72%</td></tr>
+<tr><td style="text-align:left">001308.SZ</td><td style="text-align:left">康冠科技</td><td style="text-align:right">-11.24%</td></tr>
+<tr><td style="text-align:left">601939.SH</td><td style="text-align:left">建设银行</td><td style="text-align:right">+0.67%</td></tr>
+<tr><td style="text-align:left">601328.SH</td><td style="text-align:left">交通银行</td><td style="text-align:right">+2.02%</td></tr>
+<tr><td style="text-align:left">600278.SH</td><td style="text-align:left">东方创业</td><td style="text-align:right">-15.63%</td></tr>
+<tr><td style="text-align:left">600887.SH</td><td style="text-align:left">伊利股份</td><td style="text-align:right">+1.93%</td></tr>
+<tr><td style="text-align:left">002889.SZ</td><td style="text-align:left">东方嘉盛</td><td style="text-align:right">-14.06%</td></tr>
+<tr><td style="text-align:left">601169.SH</td><td style="text-align:left">北京银行</td><td style="text-align:right">+3.01%</td></tr>
+</tbody></table></div>
+<ul>
+<li><p>等权收益：<strong>-6.72%</strong></p></li>
+<li><p>按 45% 总仓位对总资金影响：<strong>-3.02%</strong></p></li>
+</ul>
+<h3 id="section-7">优化版净值路径（11-10 至 11-13）</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>日期</th>
+<th>净值</th>
+<th>日变动</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">2026-11-10</td><td style="text-align:right">1.7597</td><td style="text-align:right">—</td></tr>
+<tr><td style="text-align:left">2026-11-11</td><td style="text-align:right">1.7401</td><td style="text-align:right">-1.11%</td></tr>
+<tr><td style="text-align:left">2026-11-12</td><td style="text-align:right">1.7520</td><td style="text-align:right">+0.68%</td></tr>
+<tr><td style="text-align:left">2026-11-13</td><td style="text-align:right">1.7285</td><td style="text-align:right">-1.34%</td></tr>
+</tbody></table></div>
+<p>从 11-10 高点累计 -1.77%，仍在 13.59% 的历史最大回撤范围内。</p>
+<h2 id="section-8">风控状态</h2>
+<ul>
+<li><p>股票总仓位上限 45%，单票上限约 6%，其余为现金。</p></li>
+<li><p>市场广度低于门槛时策略转为空仓；优化版当前缓冲只有 0.16 个百分点。</p></li>
+<li><p>个股 120 日动量必须为正；年化波动率不高于 65%；调仓时点回撤不高于 25%。</p></li>
+<li><p>每 20 个交易日调仓一次，下一次为 2026-12-04；策略没有个股止损。</p></li>
+<li><p>11-13 市场：上证 -0.59%、深证成指 -2.05%、创业板指 -3.32%，属成长股风格杀跌。</p></li>
+</ul>
+<h2 id="section-9">数据与使用限制</h2>
+<ul>
+<li><p>11-11～11-13 数据来自腾讯前复权日线，按 11-10 收盘价比例拼接；500 只证券全部获取成功，拼接比例中位数 1.0000、最大 1.0089，未发现超过 5% 的异常。</p></li>
+<li><p>候选池固定为 11-10 的 500 只，未按 11-13 成交额重新选取，避免引入样本切换。</p></li>
+<li><p>本结果是历史研究候选名单，不是未来收益保证或自动下单指令；进入模拟交易前应使用正式数据源做点时数据与独立样本外复核。</p></li>
+</ul></main></div></body></html>

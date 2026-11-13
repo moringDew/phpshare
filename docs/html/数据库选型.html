@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ADR-001：业务数据库采用 MySQL 8.0</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>ADR-001：业务数据库采用 MySQL 8.0 · 目录</strong><a href="#section-1">状态</a><a href="#section-2">决策</a><a href="#section-3">原因</a><a href="#section-4">实施约束</a><a href="#section-5">重新评估条件</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E6%95%B0%E6%8D%AE%E5%BA%93%E9%80%89%E5%9E%8B.md">数据库选型.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">ADR-001：业务数据库采用 MySQL 8.0</h1>
+<h2 id="section-1">状态</h2>
+<p>已决定，2026-11-10。</p>
+<h2 id="section-2">决策</h2>
+<p>平台业务数据库采用 <strong>MySQL 8.0 + InnoDB</strong>。历史行情和大规模因子数据继续采用 <strong>Parquet + DuckDB</strong>，Redis 仅承担缓存与任务队列，不作为最终账本。</p>
+<h2 id="section-3">原因</h2>
+<p>团队已经熟悉 MySQL，能够降低建模、SQL 开发、问题定位、备份恢复和日常运维成本。平台第一阶段面向日线回测与模拟交易，MySQL 8.0 的事务、行级锁、外键、窗口函数、JSON、CTE 和分区能力可以满足业务要求。</p>
+<p>PostgreSQL 在复杂约束、JSONB 和部分分析能力上更灵活，但这些优势不足以抵消团队切换数据库带来的学习与运维成本。复杂行情分析由 DuckDB 承担，因此不会把大规模时序分析压力集中到 MySQL。</p>
+<h2 id="section-4">实施约束</h2>
+<ul>
+<li><p>所有核心业务表使用 InnoDB、<code>utf8mb4</code> 和明确的排序规则。</p></li>
+<li><p>金额、价格、费用和数量使用 <code>DECIMAL</code>，禁止使用 <code>FLOAT/DOUBLE</code> 记账。</p></li>
+<li><p>订单采用客户端订单号唯一索引实现幂等。</p></li>
+<li><p>资金、成交、订单和持仓更新必须处于同一事务，或采用可审计的事件与补偿机制。</p></li>
+<li><p>固定锁定顺序，降低并发更新账户和持仓时的死锁概率。</p></li>
+<li><p>关键业务约束同时在数据库和服务层校验，不依赖前端。</p></li>
+<li><p>使用 Flyway 或 Alembic 管理表结构版本，禁止手工修改生产库结构。</p></li>
+<li><p>开启慢查询日志，设置连接池、备份、恢复演练和监控。</p></li>
+<li><p>Redis 任务消息不能替代数据库中的任务、订单和资金最终状态。</p></li>
+</ul>
+<h2 id="section-5">重新评估条件</h2>
+<p>当出现 MySQL 无法合理解决的复杂分析、扩展类型或约束需求，且迁移收益高于团队成本时，再评估 PostgreSQL。当前没有迁移需要。</p></main></div></body></html>

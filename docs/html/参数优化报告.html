@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>选股策略参数优化报告</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>选股策略参数优化报告 · 目录</strong><a href="#section-1">选择结果</a><a href="#section-2">训练区间</a><a href="#section-3">2026样本外验证</a><a href="#section-4">局限</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E5%8F%82%E6%95%B0%E4%BC%98%E5%8C%96%E6%8A%A5%E5%91%8A.md">参数优化报告.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">选股策略参数优化报告</h1>
+<blockquote>方法：2024-02-08 至 2025-12-31训练，2026-01-01至2026-11-10样本外验证<br>初始本金：100,000元<br>搜索参数组合：36组</blockquote>
+<h2 id="section-1">选择结果</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>参数</th>
+<th>原配置</th>
+<th>优化配置</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">持股数量</td><td style="text-align:right">10</td><td style="text-align:right">10</td></tr>
+<tr><td style="text-align:left">调仓周期</td><td style="text-align:right">20个交易日</td><td style="text-align:right">20个交易日</td></tr>
+<tr><td style="text-align:left">市场广度开仓线</td><td style="text-align:right">50%</td><td style="text-align:right">40%</td></tr>
+<tr><td style="text-align:left">股票仓位上限</td><td style="text-align:right">45%</td><td style="text-align:right">45%</td></tr>
+<tr><td style="text-align:left">单票仓位上限</td><td style="text-align:right">6%</td><td style="text-align:right">6.075%</td></tr>
+</tbody></table></div>
+<h2 id="section-2">训练区间</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>指标</th>
+<th>结果</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">累计收益</td><td style="text-align:right">35.02%</td></tr>
+<tr><td style="text-align:left">最大回撤</td><td style="text-align:right">14.86%</td></tr>
+</tbody></table></div>
+<p>训练目标为累计收益减去1.5倍最大回撤，并要求训练最大回撤不超过15%。</p>
+<h2 id="section-3">2026样本外验证</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>指标</th>
+<th>原配置</th>
+<th>优化配置</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">期末资产</td><td style="text-align:right">102,692.63元</td><td style="text-align:right">116,292.45元</td></tr>
+<tr><td style="text-align:left">累计收益</td><td style="text-align:right">2.69%</td><td style="text-align:right">16.29%</td></tr>
+<tr><td style="text-align:left">最大回撤</td><td style="text-align:right">4.92%</td><td style="text-align:right">5.29%</td></tr>
+<tr><td style="text-align:left">交易记录数</td><td style="text-align:right">46</td><td style="text-align:right">89</td></tr>
+</tbody></table></div>
+<p>优化没有提高股票总仓位，而是允许市场广度在40%至50%之间时参与交易，因此交易次数和收益同时增加。</p>
+<h2 id="section-4">局限</h2>
+<p>当前候选池根据期末成交额选择500只股票，仍可能存在点时股票池和幸存者偏差；公开行情也不能完整恢复历史ST状态。该结果属于研究优化，不能视为未来收益保证。正式模拟交易前需要用点时证券状态和正式数据源复核。</p></main></div></body></html>

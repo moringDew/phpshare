@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A 股行情接入说明</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>A 股行情接入说明 · 目录</strong><a href="#section-1">免费通达信官方日线</a><a href="#section-2">免费复权与历史ST层</a><a href="#section-3">当前数据源</a><a href="#section-4">股票范围</a><a href="#section-5">同步方法</a><a href="#section-6">数据口径</a><a href="#section-7">已知限制</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E6%95%B0%E6%8D%AE%E6%BA%90%E8%AF%B4%E6%98%8E.md">数据源说明.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">A 股行情接入说明</h1>
+<h2 id="section-1">免费通达信官方日线</h2>
+<p>已接入通达信官网发布的沪深京日线完整包，并从 ZIP 中直接解析 <code>.day</code> 文件，无需安装客户端或付费 Token。官方说明该包包含A股、B股、指数、基金和可转债等盘后日线；平台只提取沪深主板和创业板。</p>
+<p>当前原始层覆盖2023-01-03至2026-11-10，共4,941只证券、4,218,970条记录。文件清单和哈希见 <code>docs/md/data/tdx/MANIFEST.md</code>。</p>
+<p>通达信日线包为未复权价格，可用于原始行情、停牌缺口和收盘价校验；正式回测必须再合并复权因子、历史名称/ST状态和证券状态。解析命令：</p>
+<pre><code class="language-powershell">$env:PYTHONPATH = &quot;backend&quot;
+python -m market_data.tdx_cli --zip data/tdx/hsjday.zip --output data/tdx/a_share_raw.csv --start 2023-01-01</code></pre>
+<h2 id="section-2">免费复权与历史ST层</h2>
+<p>BaoStock用于补充前复权收盘价、成交额、历史ST和交易状态，按证券保存为Parquet并支持断点续传。同步使用本机Anaconda环境：</p>
+<pre><code class="language-powershell">$env:PYTHONPATH = &quot;backend&quot;
+&amp; &quot;D:\app\annaconda\python.exe&quot; -m market_data.baostock_sync `
+  --tdx-zip data/tdx/hsjday.zip `
+  --output data/baostock/symbols `
+  --start 2023-01-01 `
+  --workers 48</code></pre>
+<p>通达信文件提供历史证券全集和原始行情，BaoStock分区提供复权和历史状态。两个来源需在最新交易日执行收盘价交叉校验后发布为策略数据版本。</p>
+<h2 id="section-3">当前数据源</h2>
+<p>第一版使用 Tushare Pro API，同步沪深主板和创业板的股票基础信息、交易日历、日线行情和复权因子。Token 从环境变量读取，不写入配置文件或代码库。</p>
+<p>券商的主板、创业板交易权限不等于行情 API 权限。Tushare 账号、Token 和相应接口积分需由使用者自行开通。</p>
+<h2 id="section-4">股票范围</h2>
+<p>纳入：</p>
+<ul>
+<li><p>上海主板：<code>600/601/603/605</code> 开头且后缀 <code>.SH</code>。</p></li>
+<li><p>深圳主板：<code>000/001/002/003</code> 开头且后缀 <code>.SZ</code>。</p></li>
+<li><p>创业板：<code>300/301</code> 开头且后缀 <code>.SZ</code>。</p></li>
+</ul>
+<p>排除科创板、北交所、B 股以及不能识别的证券代码。选股阶段继续排除当前 ST、停牌、上市时间不足和流动性不足的股票。</p>
+<h2 id="section-5">同步方法</h2>
+<p>在 PowerShell 中临时设置 Token，关闭窗口后失效：</p>
+<pre><code class="language-powershell">cd quant-platform
+$env:PYTHONPATH = &quot;backend&quot;
+$env:TUSHARE_TOKEN = &quot;你的Token&quot;
+python -m market_data.sync_cli --start 2018-01-01 --end 2026-11-10 --output data/a_share_daily.csv</code></pre>
+<p>随后运行回测和选股：</p>
+<pre><code class="language-powershell">python -m stock_selection.cli --input data/a_share_daily.csv --config configs/stock_selection.json --output output/backtest.json</code></pre>
+<p>建议至少同步一个完整牛熊周期，并另留最近一段数据作为样本外验证。首次全量同步会产生较多 API 请求，应遵守账号对应的频率和积分限制。</p>
+<h2 id="section-6">数据口径</h2>
+<ul>
+<li><p>CSV 保存原始收盘价、成交股数和复权因子。</p></li>
+<li><p>流动性使用原始收盘价乘成交股数。</p></li>
+<li><p>收益、动量和趋势使用 <code>原始收盘价 × 复权因子</code>。</p></li>
+<li><p>Tushare 日线成交量的单位为手，接入层转换为股。</p></li>
+<li><p>复权因子缺失的记录不会进入研究数据。</p></li>
+</ul>
+<h2 id="section-7">已知限制</h2>
+<ul>
+<li><p>当前 ST 标识来自最新证券名称，不能完整还原历史 ST 区间；正式策略验证需要接入历史证券简称或风险警示状态。</p></li>
+<li><p>停牌日通常没有日线记录，回测将持仓该日收益按零处理，但订单成交约束仍需在下一阶段增强。</p></li>
+<li><p>免费或低积分账号可能受到调用频率和接口权限限制。</p></li>
+<li><p>数据同步失败后应按交易日断点续传；当前 MVP 会重新生成目标 CSV，断点能力尚未实现。</p></li>
+</ul></main></div></body></html>

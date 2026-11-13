@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from render_strategy_summary import render_document
 BACKEND = ROOT / "backend"
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
@@ -31,7 +33,7 @@ PUSH_CONFIG = ROOT / ".secrets" / "push_config.json"
 HISTORY_CSV = ROOT / "output" / "breadth_history.csv"
 LATEST_JSON = ROOT / "output" / "breadth_latest.json"
 LAST_PUSH = ROOT / "output" / "last_breadth_push.json"
-REPORT_DIR = ROOT / "docs" / "市场广度日报"
+REPORT_DIR = ROOT / "docs" / "md" / "市场广度日报"
 
 FIELDS = ["date", "symbol", "close", "volume", "adj_factor", "listing_days", "is_st", "suspended"]
 TENCENT_URL = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={prefix}{code},day,,,12,qfq"
@@ -486,7 +488,9 @@ def write_snapshot(target: date, title: str, message: str, window: List[Tuple[da
             "",
         ]
     )
-    (REPORT_DIR / "{}.md".format(target.isoformat())).write_text("\n".join(lines), encoding="utf-8")
+    report_path = REPORT_DIR / "{}.md".format(target.isoformat())
+    report_path.write_text("\n".join(lines), encoding="utf-8")
+    render_document(report_path)
 
 
 def main() -> int:

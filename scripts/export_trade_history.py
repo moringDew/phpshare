@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from render_strategy_summary import render_document
 if str(ROOT / "backend") not in sys.path:
     sys.path.insert(0, str(ROOT / "backend"))
 
@@ -24,7 +26,7 @@ OUT_STRATEGY_CSV = ROOT / "output" / "trades_strategy_20261113.csv"
 OUT_RESEARCH_CSV = ROOT / "output" / "trades_research_20261113.csv"
 OUT_ROUND_STRATEGY_CSV = ROOT / "output" / "round_trips_strategy_20261113.csv"
 OUT_ROUND_RESEARCH_CSV = ROOT / "output" / "round_trips_research_20261113.csv"
-OUT_MD = ROOT / "docs" / "交割历史单.md"
+OUT_MD = ROOT / "docs" / "md" / "交割历史单.md"
 
 
 def fetch_names(symbols: List[str]) -> Dict[str, str]:
@@ -380,7 +382,9 @@ def main() -> int:
             "",
         ]
     )
+    OUT_MD.parent.mkdir(parents=True, exist_ok=True)
     OUT_MD.write_text("\n".join(lines), encoding="utf-8")
+    out_html = render_document(OUT_MD)
 
     print(json.dumps(
         {
@@ -407,6 +411,7 @@ def main() -> int:
                 "return": round(research.total_return * 100, 2),
             },
             "md": str(OUT_MD),
+            "html": str(out_html),
         },
         ensure_ascii=False,
         indent=2,
