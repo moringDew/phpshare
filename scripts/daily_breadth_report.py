@@ -171,10 +171,10 @@ def breadth_details(selector: StockSelector, config: SelectionConfig, day: date)
 
 def zone_text(value: float, optimized_threshold: float, report_threshold: float) -> str:
     if value >= report_threshold:
-        return "两版在场"
+        return "两版门槛内"
     if value >= optimized_threshold:
-        return "仅优化版在场"
-    return "两版空仓"
+        return "仅优化版门槛内"
+    return "低于两版门槛"
 
 
 def fetch_names(symbols: List[str]) -> Dict[str, str]:
@@ -333,11 +333,21 @@ def build_message(target: date, value: float, above: int, available: int, delta:
         "",
         "今日广度：**{:.2f}%**（{} / {}）".format(value * 100, above, available),
         "较前一日：**{:+.2f}pp**".format(delta * 100),
-        "状态：**{}**（{}）".format(zone, zone_detail),
+        "广度区间：**{}**（{}）".format(zone, zone_detail),
         "",
     ]
 
     holdings = portfolio.get("holdings") or []
+    if holdings:
+        lines.append("策略状态：持仓 {} 只".format(len(holdings)))
+    else:
+        rebalance_date = portfolio.get("rebalance_date")
+        rebalance_breadth = portfolio.get("breadth_at_rebalance")
+        if rebalance_date and rebalance_breadth is not None:
+            lines.append("策略状态：空仓（{} 调仓时广度 {:.2f}% < {:.0f}%）".format(
+                rebalance_date, float(rebalance_breadth) * 100, optimized_threshold * 100))
+        else:
+            lines.append("策略状态：空仓")
     if portfolio.get("risk_on") and holdings:
         equity = float(portfolio.get("equity", 1.0))
         market_value = float(portfolio.get("market_value", 0.0))
@@ -354,8 +364,10 @@ def build_message(target: date, value: float, above: int, available: int, delta:
             lines.append("· {} {} 未买入：100 股需 {:,.0f} 元，超过单票上限 {:,.0f} 元".format(
                 item["symbol"], item["name"], float(item["lot_cost"]), float(item["single_limit"])))
     else:
-        lines.append("**当前持股**：空仓（现金 {:,.0f} 元）".format(
-            float(portfolio.get("cash", 100000.0))))
+        lines.append("现金 **{:,.0f}** 元｜策略自 {} 累计 **{:+.2f}%**".format(
+            float(portfolio.get("cash", 100000.0)),
+            track_start.isoformat() if track_start else "",
+            float(portfolio.get("return_pct", 0.0))))
 
     lines.extend(["", "**今日建议**：{}".format(advice)])
     for note in risk_notes:

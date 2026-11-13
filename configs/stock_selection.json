@@ -25,7 +25,7 @@
   "maximum_equity_exposure": 0.4,
   "initial_capital": 100000.0,
   "cash_yield_annual": 0.015,
-  "strategy_start": "2026-10-01",
+  "strategy_start": "2026-01-01",
   "stop_loss_pct": 0.08,
   "lot_size": 100,
   "maximum_single_position": 0.1,

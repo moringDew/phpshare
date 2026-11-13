@@ -18,7 +18,6 @@ from stock_selection.engine import SelectionConfig, StockSelector, load_bars  # 
 
 STORE = ROOT / "data" / "a_share_public_latest.csv"
 CONFIG = ROOT / "configs" / "stock_selection_optimized.json"
-STRATEGY_START = date(2026, 10, 8)
 RESEARCH_START = date(2024, 2, 8)
 END = date(2026, 11, 13)
 OUT_STRATEGY_CSV = ROOT / "output" / "trades_strategy_20261113.csv"
@@ -139,7 +138,7 @@ def analyze(label: str, config: SelectionConfig, start: date, end: date, names: 
 
     return Analysis(
         label=label,
-        start=start,
+        start=date.fromisoformat(result.start_date),
         end=end,
         trades=rows,
         positions=positions,
@@ -189,6 +188,8 @@ def trades_table(analysis: Analysis, limit: Optional[int] = None) -> List[str]:
 
 
 def positions_table(analysis: Analysis) -> List[str]:
+    if not analysis.positions:
+        return ["当前空仓，无持仓明细。", ""]
     lines = [
         "| 代码 | 名称 | 股数 | 成本 | 现价 | 市值 | 浮动盈亏 |",
         "|---|---|---:|---:|---:|---:|---:|",
@@ -212,7 +213,11 @@ def main() -> int:
     names = fetch_names(sorted(bars_symbols))
 
     strategy_config = SelectionConfig.from_json(CONFIG)
-    strategy = analyze("策略模拟盘", strategy_config, STRATEGY_START, END, names)
+    configured_start = (
+        date.fromisoformat(strategy_config.strategy_start)
+        if strategy_config.strategy_start else RESEARCH_START
+    )
+    strategy = analyze("策略模拟盘", strategy_config, configured_start, END, names)
 
     research_config = SelectionConfig.from_json(CONFIG)
     research_config.strategy_start = None
@@ -227,9 +232,10 @@ def main() -> int:
         "> 数据截至：2026-11-13",
         "> 当前配置：5 只 / 40% 总仓位 / 单票 10% / 现金年化 1.5%",
         "",
-        "## 一、策略模拟盘（2026-10-08 起）",
+        "## 一、策略模拟盘（{} 起）".format(strategy.start.isoformat()),
         "",
-        "策略起点设为 2026-10-01，国庆休市后首个交易日为 10-08。首次调仓 10-08 因广度不足空仓，11-05 信号、11-06 成交买入 5 只。",
+        "策略起点配置为 {}，实际首个交易日为 {}；以下包含调仓买卖和 -8% 止损卖出。".format(
+            configured_start.isoformat(), strategy.start.isoformat()),
         "",
         "### 汇总",
         "",
