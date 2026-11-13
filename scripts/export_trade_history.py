@@ -22,6 +22,8 @@ RESEARCH_START = date(2024, 2, 8)
 END = date(2026, 11, 13)
 OUT_STRATEGY_CSV = ROOT / "output" / "trades_strategy_20261113.csv"
 OUT_RESEARCH_CSV = ROOT / "output" / "trades_research_20261113.csv"
+OUT_ROUND_STRATEGY_CSV = ROOT / "output" / "round_trips_strategy_20261113.csv"
+OUT_ROUND_RESEARCH_CSV = ROOT / "output" / "round_trips_research_20261113.csv"
 OUT_MD = ROOT / "docs" / "TRADE_HISTORY.md"
 
 
@@ -55,7 +57,9 @@ class Analysis:
     label: str
     start: date
     end: date
+    initial_capital: float
     trades: List[Dict[str, object]]
+    round_trips: List[Dict[str, object]]
     positions: List[Dict[str, object]]
     cash: float
     equity: float
@@ -69,8 +73,9 @@ class Analysis:
 def analyze(label: str, config: SelectionConfig, start: date, end: date, names: Dict[str, str]) -> Analysis:
     selector = StockSelector(load_bars(STORE), config)
     result = run_capital_backtest(selector, start, end)
-    positions_state: Dict[str, Dict[str, float]] = {}
+    positions_state: Dict[str, Dict[str, object]] = {}
     rows: List[Dict[str, object]] = []
+    round_trips: List[Dict[str, object]] = []
     realized_total = 0.0
 
     for trade in result.trades:
@@ -79,19 +84,44 @@ def analyze(label: str, config: SelectionConfig, start: date, end: date, names: 
         price = float(trade["price"])
         fee = float(trade["fee"])
         amount = shares * price
-        state = positions_state.setdefault(symbol, {"shares": 0.0, "cost": 0.0})
+        state = positions_state.setdefault(
+            symbol, {"shares": 0.0, "cost": 0.0, "first_buy_date": None}
+        )
         realized = None
+        return_pct = None
         if trade["side"] == "BUY":
-            state["shares"] += shares
-            state["cost"] += amount + fee
+            if float(state["shares"]) == 0.0:
+                state["first_buy_date"] = trade["date"]
+            state["shares"] = float(state["shares"]) + shares
+            state["cost"] = float(state["cost"]) + amount + fee
             cash_flow = -(amount + fee)
         else:
-            average_cost = state["cost"] / state["shares"] if state["shares"] else price
+            held = float(state["shares"])
+            average_cost = float(state["cost"]) / held if held else price
             realized = (price - average_cost) * shares - fee
             realized_total += realized
-            state["cost"] -= average_cost * shares
-            state["shares"] -= shares
+            return_pct = realized / (average_cost * shares) * 100.0 if average_cost * shares else 0.0
+            state["cost"] = float(state["cost"]) - average_cost * shares
+            state["shares"] = held - shares
             cash_flow = amount - fee
+            buy_date = str(state.get("first_buy_date") or trade["date"])
+            round_trips.append(
+                {
+                    "buy_date": buy_date,
+                    "sell_date": trade["date"],
+                    "holding_days": (date.fromisoformat(trade["date"]) - date.fromisoformat(buy_date)).days,
+                    "symbol": symbol,
+                    "name": names.get(symbol, symbol),
+                    "shares": shares,
+                    "cost": average_cost,
+                    "sell_price": price,
+                    "return_pct": return_pct,
+                    "realized_pnl": realized,
+                    "reason": trade.get("reason", "rebalance"),
+                }
+            )
+            if float(state["shares"]) <= 0:
+                positions_state.pop(symbol, None)
         rows.append(
             {
                 "date": trade["date"],
@@ -105,6 +135,7 @@ def analyze(label: str, config: SelectionConfig, start: date, end: date, names: 
                 "fee": fee,
                 "cash_flow": cash_flow,
                 "realized_pnl": realized,
+                "return_pct": return_pct,
                 "reason": trade.get("reason", "rebalance"),
             }
         )
@@ -112,16 +143,16 @@ def analyze(label: str, config: SelectionConfig, start: date, end: date, names: 
     positions: List[Dict[str, object]] = []
     unrealized_total = 0.0
     for symbol, state in positions_state.items():
-        shares = int(state["shares"])
+        shares = int(float(state["shares"]))
         if shares <= 0:
             continue
-        average_cost = state["cost"] / shares
+        average_cost = float(state["cost"]) / shares
         bar = selector.by_date.get(end, {}).get(symbol)
         if bar is None:
             continue
         price = bar.close * bar.adj_factor
         market_value = shares * price
-        unrealized = market_value - state["cost"]
+        unrealized = market_value - float(state["cost"])
         unrealized_total += unrealized
         positions.append(
             {
@@ -140,7 +171,9 @@ def analyze(label: str, config: SelectionConfig, start: date, end: date, names: 
         label=label,
         start=date.fromisoformat(result.start_date),
         end=end,
+        initial_capital=float(config.initial_capital),
         trades=rows,
+        round_trips=round_trips,
         positions=positions,
         cash=result.final_cash,
         equity=result.final_equity,
@@ -153,7 +186,7 @@ def analyze(label: str, config: SelectionConfig, start: date, end: date, names: 
 
 
 def write_trades_csv(path: Path, analysis: Analysis) -> None:
-    fields = ["date", "signal_date", "side", "reason", "symbol", "name", "shares", "price", "amount", "fee", "cash_flow", "realized_pnl"]
+    fields = ["date", "signal_date", "side", "reason", "symbol", "name", "shares", "price", "amount", "fee", "cash_flow", "return_pct", "realized_pnl"]
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
@@ -165,23 +198,61 @@ def write_trades_csv(path: Path, analysis: Analysis) -> None:
             item["fee"] = "{:.2f}".format(float(item["fee"]))
             item["cash_flow"] = "{:.2f}".format(float(item["cash_flow"]))
             item["realized_pnl"] = "" if item["realized_pnl"] is None else "{:.2f}".format(float(item["realized_pnl"]))
+            item["return_pct"] = "" if item.get("return_pct") is None else "{:.2f}".format(float(item["return_pct"]))
+            writer.writerow(item)
+
+
+def write_round_trips_csv(path: Path, analysis: Analysis) -> None:
+    fields = ["buy_date", "sell_date", "holding_days", "symbol", "name", "shares", "cost", "sell_price", "return_pct", "realized_pnl", "reason"]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        for row in analysis.round_trips:
+            item = dict(row)
+            item["cost"] = "{:.2f}".format(float(item["cost"]))
+            item["sell_price"] = "{:.2f}".format(float(item["sell_price"]))
+            item["return_pct"] = "{:.2f}".format(float(item["return_pct"]))
+            item["realized_pnl"] = "{:.2f}".format(float(item["realized_pnl"]))
             writer.writerow(item)
 
 
 def trades_table(analysis: Analysis, limit: Optional[int] = None) -> List[str]:
     rows = analysis.trades[-limit:] if limit else analysis.trades
     lines = [
-        "| 日期 | 方向 | 原因 | 代码 | 名称 | 股数 | 成交价 | 成交额 | 手续费 | 现金流 | 已实现盈亏 |",
-        "|---|---|---|---|---|---:|---:|---:|---:|---:|---:|",
+        "| 日期 | 方向 | 原因 | 代码 | 名称 | 股数 | 成交价 | 成交额 | 手续费 | 现金流 | 收益率 | 已实现盈亏 |",
+        "|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in rows:
         realized = "—" if row["realized_pnl"] is None else "{:+,.2f}".format(float(row["realized_pnl"]))
+        return_text = "—" if row.get("return_pct") is None else "{:+.2f}%".format(float(row["return_pct"]))
         reason = "止损" if row.get("reason") == "stop" else "调仓"
         lines.append(
-            "| {date} | {side} | {reason} | {symbol} | {name} | {shares} | {price:.2f} | {amount:,.0f} | {fee:,.2f} | {cash:+,.0f} | {realized} |".format(
+            "| {date} | {side} | {reason} | {symbol} | {name} | {shares} | {price:.2f} | {amount:,.0f} | {fee:,.2f} | {cash:+,.0f} | {return_text} | {realized} |".format(
                 date=row["date"], side=row["side"], reason=reason, symbol=row["symbol"], name=row["name"],
                 shares=row["shares"], price=float(row["price"]), amount=float(row["amount"]),
-                fee=float(row["fee"]), cash=float(row["cash_flow"]), realized=realized,
+                fee=float(row["fee"]), cash=float(row["cash_flow"]), return_text=return_text, realized=realized,
+            )
+        )
+    return lines
+
+
+def round_trips_table(analysis: Analysis, limit: Optional[int] = None) -> List[str]:
+    rows = analysis.round_trips[-limit:] if limit else analysis.round_trips
+    if not rows:
+        return ["无已平仓记录。", ""]
+    lines = [
+        "| 买入日期 | 卖出日期 | 持有天数 | 代码 | 名称 | 股数 | 买入价 | 卖出价 | 收益率 | 已实现盈亏 | 原因 |",
+        "|---|---|---:|---|---|---:|---:|---:|---:|---:|---|",
+    ]
+    for row in rows:
+        reason = "止损" if row.get("reason") == "stop" else "调仓"
+        lines.append(
+            "| {buy_date} | {sell_date} | {holding_days} | {symbol} | {name} | {shares} | {cost:.2f} | {sell_price:.2f} | {return_pct:+.2f}% | {pnl:+,.0f} | {reason} |".format(
+                buy_date=row["buy_date"], sell_date=row["sell_date"], holding_days=row["holding_days"],
+                symbol=row["symbol"], name=row["name"], shares=row["shares"],
+                cost=float(row["cost"]), sell_price=float(row["sell_price"]),
+                return_pct=float(row["return_pct"]), pnl=float(row["realized_pnl"]), reason=reason,
             )
         )
     return lines
@@ -225,11 +296,14 @@ def main() -> int:
 
     write_trades_csv(OUT_STRATEGY_CSV, strategy)
     write_trades_csv(OUT_RESEARCH_CSV, research)
+    write_round_trips_csv(OUT_ROUND_STRATEGY_CSV, strategy)
+    write_round_trips_csv(OUT_ROUND_RESEARCH_CSV, research)
 
     lines = [
         "# 交割历史单汇总",
         "",
         "> 数据截至：2026-11-13",
+        "> 初始资金：{:,.2f} 元".format(strategy.initial_capital),
         "> 当前配置：5 只 / 40% 总仓位 / 单票 10% / 现金年化 1.5%",
         "",
         "## 一、策略模拟盘（{} 起）".format(strategy.start.isoformat()),
@@ -241,6 +315,7 @@ def main() -> int:
         "",
         "| 项目 | 数值 |",
         "|---|---:|",
+        "| 初始资金 | {:,.2f} 元 |".format(strategy.initial_capital),
         "| 交易笔数 | {} |".format(len(strategy.trades)),
         "| 止损卖出 | {} 笔 |".format(sum(1 for row in strategy.trades if row.get("reason") == "stop")),
         "| 手续费合计 | {:,.2f} 元 |".format(strategy.fees),
@@ -255,12 +330,15 @@ def main() -> int:
         "",
     ]
     lines.extend(trades_table(strategy))
+    lines.extend(["", "### 平仓明细（买入 → 卖出）", ""])
+    lines.extend(round_trips_table(strategy))
     lines.extend(["", "### 当前持仓", ""])
     lines.extend(positions_table(strategy))
     lines.extend(
         [
             "",
             "完整明细：`output/trades_strategy_20261113.csv`",
+            "平仓明细：`output/round_trips_strategy_20261113.csv`",
             "",
             "## 二、研究回测（2024-02-08 起）",
             "",
@@ -270,6 +348,7 @@ def main() -> int:
             "",
             "| 项目 | 数值 |",
             "|---|---:|",
+            "| 初始资金 | {:,.2f} 元 |".format(research.initial_capital),
             "| 交易笔数 | {} |".format(len(research.trades)),
             "| 止损卖出 | {} 笔 |".format(sum(1 for row in research.trades if row.get("reason") == "stop")),
             "| 手续费合计 | {:,.2f} 元 |".format(research.fees),
@@ -284,10 +363,13 @@ def main() -> int:
         ]
     )
     lines.extend(trades_table(research, limit=20))
+    lines.extend(["", "### 最近 20 笔平仓", ""])
+    lines.extend(round_trips_table(research, limit=20))
     lines.extend(
         [
             "",
             "完整明细：`output/trades_research_20261113.csv`",
+            "平仓明细：`output/round_trips_research_20261113.csv`",
             "",
             "## 说明",
             "",
@@ -303,7 +385,9 @@ def main() -> int:
     print(json.dumps(
         {
             "strategy": {
+                "initial_capital": round(strategy.initial_capital, 2),
                 "trades": len(strategy.trades),
+                "round_trips": len(strategy.round_trips),
                 "stop_trades": sum(1 for row in strategy.trades if row.get("reason") == "stop"),
                 "fees": round(strategy.fees, 2),
                 "realized": round(strategy.realized_pnl, 2),
@@ -312,7 +396,9 @@ def main() -> int:
                 "return": round(strategy.total_return * 100, 2),
             },
             "research": {
+                "initial_capital": round(research.initial_capital, 2),
                 "trades": len(research.trades),
+                "round_trips": len(research.round_trips),
                 "stop_trades": sum(1 for row in research.trades if row.get("reason") == "stop"),
                 "fees": round(research.fees, 2),
                 "realized": round(research.realized_pnl, 2),

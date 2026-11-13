@@ -190,8 +190,10 @@
 | `scripts/backtest_daily_overlay.py` | 每日广度/止损叠加回测 |
 | `output/daily_overlay_backtest.json` | 每日风控回测结果 |
 | `docs/TRADE_HISTORY.md` | 交割历史单汇总（模拟盘 + 研究回测） |
-| `output/trades_strategy_20261113.csv` | 策略模拟盘成交明细 |
-| `output/trades_research_20261113.csv` | 研究回测成交明细 |
+| `output/trades_strategy_20261113.csv` | 策略模拟盘成交明细（含收益率） |
+| `output/trades_research_20261113.csv` | 研究回测成交明细（含收益率） |
+| `output/round_trips_strategy_20261113.csv` | 策略模拟盘平仓明细（买入/卖出/持有天数/收益率） |
+| `output/round_trips_research_20261113.csv` | 研究回测平仓明细 |
 | `data/a_share_public.csv` | 原始公开行情，截至 11-10 |
 | `data/a_share_public_20261113.csv` | 拼接后行情，截至 11-13 |
 | `data/a_share_public_latest.csv` | 每日更新使用的数据文件 |
