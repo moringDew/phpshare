@@ -20,3 +20,8 @@ data/etf_daily/
 data/ths_daily/
 data/ths_daily_combined.csv
 data/ths_daily_combined_800.csv
+!data/a_share_public_latest.csv
+!data/ths_daily_combined.csv
+!data/ths_daily_combined_800.csv
+!data/etf_daily/
+!data/etf_daily/**
