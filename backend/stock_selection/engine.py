@@ -7,7 +7,7 @@ import statistics
 from dataclasses import asdict, dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
 
 @dataclass(frozen=True)
@@ -50,6 +50,9 @@ class SelectionConfig:
     strategy_start: Optional[str] = None
     stop_loss_pct: Optional[float] = None
     skip_limit_up_buys: bool = True
+    skip_limit_down_sells: bool = True
+    cash_reentry_breadth: Optional[float] = None
+    cash_deploy_breadth: Optional[float] = None
     lot_size: int = 100
     maximum_single_position: float = 0.06
     weights: Dict[str, float] = field(
@@ -195,8 +198,10 @@ def limit_up_rate(symbol: str, is_st: bool = False) -> Optional[float]:
 
 
 class StockSelector:
-    def __init__(self, bars: Sequence[Bar], config: Optional[SelectionConfig] = None):
+    def __init__(self, bars: Sequence[Bar], config: Optional[SelectionConfig] = None,
+                 allowed_by_date: Optional[Mapping[date, Set[str]]] = None):
         self.config = config or SelectionConfig()
+        self.allowed_by_date = allowed_by_date
         self.by_symbol: Dict[str, List[Bar]] = {}
         self.index: Dict[str, Dict[date, int]] = {}
         self.by_date: Dict[date, Dict[str, Bar]] = {}
@@ -207,6 +212,12 @@ class StockSelector:
             items.sort(key=lambda item: item.trade_date)
             self.index[symbol] = {bar.trade_date: i for i, bar in enumerate(items)}
         self.calendar = sorted(self.by_date)
+
+    def _is_allowed(self, symbol: str, on_date: date) -> bool:
+        if self.allowed_by_date is None:
+            return True
+        allowed = self.allowed_by_date.get(on_date)
+        return allowed is None or symbol in allowed
 
     def daily_change(self, symbol: str, on_date: date) -> Optional[float]:
         """Adjusted close-to-close change, using the previous available bar."""
@@ -240,6 +251,24 @@ class StockSelector:
             return False
         # Different adjustment basis: fall back to adjusted return with a 0.3pp margin.
         return change >= rate - 0.003
+
+    def is_limit_down(self, symbol: str, on_date: date) -> bool:
+        """Whether the stock closed at its limit-down price on this date."""
+        idx = self.index.get(symbol, {}).get(on_date)
+        if idx is None or idx < 1:
+            return False
+        items = self.by_symbol[symbol]
+        current, previous = items[idx], items[idx - 1]
+        rate = limit_up_rate(symbol, current.is_st)
+        if rate is None or current.suspended:
+            return False
+        if current.adj_factor == previous.adj_factor:
+            limit_price = math.floor(previous.close * (1.0 - rate) * 100.0 + 0.5) / 100.0
+            return current.close <= limit_price + 0.005
+        change = self.daily_change(symbol, on_date)
+        if change is None:
+            return False
+        return change <= -rate + 0.003
 
     def strategy_start_index(self) -> int:
         floor = self.config.minimum_history - 1
@@ -295,6 +324,23 @@ class StockSelector:
             return None
         if drawdown > self.config.maximum_current_drawdown:
             return None
+        if any(name in self.config.weights for name in ("rsi_14", "volume_ratio", "breakout_20")):
+            gains = 0.0
+            losses = 0.0
+            for offset in range(idx - 13, idx + 1):
+                change = closes[offset] - closes[offset - 1]
+                if change >= 0:
+                    gains += change
+                else:
+                    losses -= change
+            average_gain = gains / 14.0
+            average_loss = losses / 14.0
+            factors["rsi_14"] = (100.0 if average_loss == 0 else
+                                 100.0 - 100.0 / (1.0 + average_gain / average_loss))
+            volume_5 = sum(bar.volume for bar in items[idx - 4 : idx + 1]) / 5.0
+            volume_20 = sum(bar.volume for bar in items[idx - 19 : idx + 1]) / 20.0
+            factors["volume_ratio"] = volume_5 / volume_20 if volume_20 else 1.0
+            factors["breakout_20"] = closes[idx] / max(closes[idx - 19 : idx + 1])
         if current.roe is not None:
             factors["roe"] = current.roe
         if current.revenue_growth is not None:
@@ -306,6 +352,8 @@ class StockSelector:
     def select(self, on_date: date) -> List[Candidate]:
         raw: Dict[str, Dict[str, float]] = {}
         for symbol in self.by_date.get(on_date, {}):
+            if not self._is_allowed(symbol, on_date):
+                continue
             factors = self._raw_factors(symbol, on_date)
             if factors is not None:
                 raw[symbol] = factors
@@ -331,6 +379,8 @@ class StockSelector:
         available = 0
         lookback = self.config.market_breadth_lookback
         for symbol in self.by_date.get(on_date, {}):
+            if not self._is_allowed(symbol, on_date):
+                continue
             if infer_board(symbol) not in self.config.allowed_boards:
                 continue
             idx = self.index.get(symbol, {}).get(on_date)

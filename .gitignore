@@ -12,6 +12,11 @@ data/a_share_public*.csv
 data/a_share_daily.csv
 vendor/
 data/real_account/
+data/intraday/
 docs/md/真实持仓.md
 docs/html/真实持仓.html
 
+data/etf_daily/
+data/ths_daily/
+data/ths_daily_combined.csv
+data/ths_daily_combined_800.csv

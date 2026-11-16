@@ -207,10 +207,12 @@ def build_result(alert: Dict[str, object], quotes: Dict[str, Quote], today: date
 def _row_text(row: Dict[str, object]) -> str:
     change = row.get("change_vs_reference_pct")
     change_text = "{:+.2f}%".format(float(change)) if change is not None else "—"
+    day_change = row.get("pct_change")
+    day_text = "{:+.2f}%".format(float(day_change)) if day_change is not None else "—"
     price = row.get("price")
     price_text = "{:.2f}".format(float(price)) if price is not None else "—"
-    return "{} {}：现价 {}（较参考 {}）｜{}｜{}｜{}".format(
-        row["symbol"], row["name"], price_text, change_text,
+    return "{} {}：现价 {}（较参考 {}）｜当日涨幅 {}｜{}｜{}｜{}".format(
+        row["symbol"], row["name"], price_text, change_text, day_text,
         row["label"], row["advice"], "{} 股".format(row["shares"]),
     )
 
@@ -280,15 +282,16 @@ def write_report(result: Dict[str, object]) -> Tuple[Path, Path]:
         lines.extend([
             title,
             "",
-            "| 代码 | 名称 | 信号股数 | 参考价 | 现价 | 较参考 | 状态 | 建议 |",
-            "|---|---|---:|---:|---:|---:|---|---|",
+            "| 代码 | 名称 | 信号股数 | 参考价 | 现价 | 当日涨幅 | 较参考 | 状态 | 建议 |",
+            "|---|---|---:|---:|---:|---:|---:|---|---|",
         ])
         for row in rows:
             price = "—" if row["price"] is None else "{:.2f}".format(float(row["price"]))
             change = "—" if row["change_vs_reference_pct"] is None else "{:+.2f}%".format(float(row["change_vs_reference_pct"]))
-            lines.append("| {} | {} | {} | {:.2f} | {} | {} | {} | {} |".format(
+            day_change = "—" if row.get("pct_change") is None else "{:+.2f}%".format(float(row["pct_change"]))
+            lines.append("| {} | {} | {} | {:.2f} | {} | {} | {} | {} | {} |".format(
                 row["symbol"], row["name"], row["shares"], float(row["reference_price"]),
-                price, change, row["label"], row["advice"]))
+                price, day_change, change, row["label"], row["advice"]))
         lines.append("")
     lines.extend([
         "## 说明",

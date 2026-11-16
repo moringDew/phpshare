@@ -8,12 +8,12 @@
 nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
 main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
 blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
-code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
-table.wide{white-space:nowrap;font-variant-numeric:tabular-nums}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0;padding-bottom:6px}.table-hint{font-size:13px;color:#69788c;margin:12px 0 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{width:max-content;min-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
 pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
 @media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
 @media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
-</style></head><body><div class="layout"><nav aria-label="目录"><strong>A 股选股策略汇总 · 目录</strong><a href="#section-1">1. 一句话概括</a><a href="#section-2">2. 策略框架</a><a href="#section-7">3. 当前配置</a><a href="#section-8">4. 当前状态（2026-11-13）</a><a href="#section-10">5. 回测表现对比</a><a href="#section-11">6. 关键结论与容易踩的坑</a><a href="#section-12">7. 每日报告与推送</a><a href="#section-14">8. 待定事项</a><a href="#section-15">9. 文件索引</a><a href="#section-16">10. 风险声明</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E7%AD%96%E7%95%A5%E6%B1%87%E6%80%BB.md">策略汇总.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">A 股选股策略汇总</h1>
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>A 股选股策略汇总 · 目录</strong><a href="#section-1">1. 一句话概括</a><a href="#section-2">2. 策略框架</a><a href="#section-7">3. 当前配置</a><a href="#section-8">4. 当前状态（2026-11-13）</a><a href="#section-10">5. 回测表现对比</a><a href="#section-11">6. 关键结论与容易踩的坑</a><a href="#section-12">7. 每日报告与推送</a><a href="#section-15">8. 待定事项</a><a href="#section-16">9. 文件索引</a><a href="#section-17">10. 风险声明</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E7%AD%96%E7%95%A5%E6%B1%87%E6%80%BB.md">策略汇总.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">A 股选股策略汇总</h1>
 <blockquote>更新时间：2026-11-13<br>数据截至：2026-11-13<br>用途：策略参数、当前状态、回测结论与待办事项的长期备忘</blockquote>
 <h2 id="section-1">1. 一句话概括</h2>
 <p>在 500 只流动性较好的沪深主板/创业板股票中，用多因子打分选前 N 名；用“市场广度”判断市场状态，广度低于门槛时空仓；每 20 个交易日调仓一次，单票和总仓位都有上限。</p>
@@ -197,10 +197,26 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <li><p>日志：<code>output/logs/midday_check_YYYY-MM-DD.log</code></p></li>
 <li><p>注册任务：<code>powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register_midday_task.ps1</code></p></li>
 </ul>
-<h2 id="section-14">8. 待定事项</h2>
+<h3 id="section-14">盘中实时预演</h3>
+<ul>
+<li><p>脚本：<code>scripts/realtime_preview.py</code></p></li>
+<li><p>定时任务：<code>QuantRealtimePreview</code>，周一至周五 09:45–11:30、13:15–14:45，每 <strong>15 分钟</strong>一次（15 次/日）</p></li>
+<li><p>做法：抓取 500 只股票实时行情，用当前价代替今日收盘价，重算广度和日频前 5 名</p></li>
+<li><p>门槛：只有广度<strong>严格大于 50%</strong> 才给买入建议；否则显示空仓</p></li>
+<li><p>推送内容：广度、风险状态、目标 5 只、较上次新增/剔除；涨停标“不追”，停牌标“无行情”</p></li>
+<li><p>600869 远东股份单独跟踪：现价、成本 13.48、止损 12.40，不进入策略目标</p></li>
+<li><p>盘中预演是<strong>日频重算</strong>；20:00 的 20 日调仓信号是另一条策略，两者不互相替代</p></li>
+<li><p>默认每次都推；可改成 <code>--push-mode change</code> 只在目标变化时推（14:45 仍推）</p></li>
+<li><p>报告：<code>docs/md/实时预演/YYYY-MM-DD.md</code>、<code>docs/html/实时预演/YYYY-MM-DD.html</code></p></li>
+<li><p>历史：<code>output/realtime_preview_YYYY-MM-DD.csv</code>；最新：<code>output/realtime_preview_latest.json</code></p></li>
+<li><p>日志：<code>output/logs/realtime_preview_YYYY-MM-DD.log</code></p></li>
+<li><p>注册任务：<code>powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register_realtime_task.ps1</code></p></li>
+</ul>
+<h2 id="section-15">8. 待定事项</h2>
 <ul>
 <li><p><input type="checkbox" disabled checked> 每天 20:00 检查买卖信号，有信号时推送个人微信</p></li>
 <li><p><input type="checkbox" disabled checked> 增加 11:35 午间执行复核：检查次日清单标的的涨停/跌停/停牌状态</p></li>
+<li><p><input type="checkbox" disabled checked> 增加盘中每 15 分钟实时预演：用实时价重算广度与日频前 5 名</p></li>
 <li><p><input type="checkbox" disabled checked> 每日风控已加入：个股 -8% 止损（每日广度清仓已测试并否决）</p></li>
 <li><p><input type="checkbox" disabled checked> 策略起点已设为 2026-01-01（实际首个交易日 01-05）</p></li>
 <li><p><input type="checkbox" disabled checked> 现金收益假设已加入：年化 1.5%（可改为 1.0%～2.0%）</p></li>
@@ -210,7 +226,7 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <li><p><input type="checkbox" disabled checked> 增加手工真实持仓台账，按用户告知的实际成交更新，并附加到微信买卖提醒中核对；<a href="%E7%9C%9F%E5%AE%9E%E6%8C%81%E4%BB%93%E8%AF%B4%E6%98%8E.html">录入说明</a>。尚未连接券商自动同步。</p></li>
 <li><p><input type="checkbox" disabled> 5 只 vs 10 只的最终取舍：5 只收益更集中，10 只胜率更高、更稳</p></li>
 </ul>
-<h2 id="section-15">9. 文件索引</h2>
+<h2 id="section-16">9. 文件索引</h2>
 <div class="table-wrap"><table><thead><tr>
 <th>文件</th>
 <th>内容</th>
@@ -225,6 +241,9 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <tr><td style="text-align:left"><code>scripts/midday_check.py</code></td><td style="text-align:left">午间执行复核（检查涨跌停/停牌）</td></tr>
 <tr><td style="text-align:left"><code>scripts/run_midday_check.ps1</code></td><td style="text-align:left">午间 11:35 定时任务包装脚本</td></tr>
 <tr><td style="text-align:left"><code>scripts/register_midday_task.ps1</code></td><td style="text-align:left">注册午间 11:35 Windows 定时任务</td></tr>
+<tr><td style="text-align:left"><code>scripts/realtime_preview.py</code></td><td style="text-align:left">盘中每 15 分钟实时预演</td></tr>
+<tr><td style="text-align:left"><code>scripts/run_realtime_preview.ps1</code></td><td style="text-align:left">盘中预演定时任务包装脚本</td></tr>
+<tr><td style="text-align:left"><code>scripts/register_realtime_task.ps1</code></td><td style="text-align:left">注册盘中每 15 分钟 Windows 定时任务</td></tr>
 <tr><td style="text-align:left"><code>scripts/optimize_topn_grid.py</code></td><td style="text-align:left">扩展持股数网格（未完成）</td></tr>
 <tr><td style="text-align:left"><code>scripts/export_trade_history.py</code></td><td style="text-align:left">交割历史单导出脚本</td></tr>
 <tr><td style="text-align:left"><code>scripts/backtest_daily_overlay.py</code></td><td style="text-align:left">每日广度/止损叠加回测</td></tr>
@@ -241,5 +260,5 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <tr><td style="text-align:left"><code>docs/md/选股报告_2026-11-13.md</code></td><td style="text-align:left">11-13 选股报告</td></tr>
 <tr><td style="text-align:left"><code>docs/html/市场广度报告_2026-10-08_2026-11-13.html</code></td><td style="text-align:left">10 月至今广度可视化报告</td></tr>
 </tbody></table></div>
-<h2 id="section-16">10. 风险声明</h2>
+<h2 id="section-17">10. 风险声明</h2>
 <p>以上均为历史数据回测和量化规则信号，不构成投资建议。候选池按当前成交额选取，存在幸存者偏差；公开行情不能完整还原历史 ST 状态；买入已剔除信号日/成交日收盘涨停，但回测仍未考虑跌停无法卖出、真实成交滑点、分红税等因素。实盘前应使用正式数据源和独立样本外复核。</p></main></div></body></html>

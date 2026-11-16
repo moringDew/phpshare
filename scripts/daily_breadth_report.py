@@ -37,6 +37,7 @@ HISTORY_CSV = ROOT / "output" / "breadth_history.csv"
 LATEST_JSON = ROOT / "output" / "breadth_latest.json"
 LAST_PUSH = ROOT / "output" / "last_breadth_push.json"
 LAST_TRADE_PUSH = ROOT / "output" / "last_trade_signal_push.json"
+NAME_CACHE = ROOT / "output" / "name_cache.json"
 REPORT_DIR = ROOT / "docs" / "md" / "市场广度日报"
 
 FIELDS = ["date", "symbol", "close", "volume", "adj_factor", "listing_days", "is_st", "suspended"]
@@ -194,28 +195,40 @@ def zone_text(value: float, optimized_threshold: float, report_threshold: float)
 def fetch_names(symbols: List[str]) -> Dict[str, str]:
     if not symbols:
         return {}
-    codes = []
-    for symbol in symbols:
-        code, exchange = symbol.split(".")
-        codes.append(("sh" if exchange == "SH" else "sz") + code)
-    url = "https://qt.gtimg.cn/q=" + ",".join(codes)
-    try:
-        request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(request, timeout=15) as response:
-            text = response.read().decode("gbk", "replace")
-        code_to_symbol = {symbol.split(".")[0]: symbol for symbol in symbols}
-        names: Dict[str, str] = {}
-        for segment in text.strip().split(";"):
-            if "=" not in segment:
-                continue
-            payload = segment.split("=", 1)[1].strip().strip('"')
-            parts = payload.split("~")
-            if len(parts) >= 3 and parts[2] in code_to_symbol:
-                names[code_to_symbol[parts[2]]] = parts[1]
-        return names
-    except Exception as exc:
-        log("股票名称获取失败：{}".format(exc))
-        return {}
+    cache: Dict[str, str] = {}
+    if NAME_CACHE.exists():
+        try:
+            cache = json.loads(NAME_CACHE.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            cache = {}
+    missing = [symbol for symbol in symbols if not cache.get(symbol)]
+    for offset in range(0, len(missing), 50):
+        batch = missing[offset : offset + 50]
+        codes = []
+        for symbol in batch:
+            code, exchange = symbol.split(".")
+            codes.append(("sh" if exchange == "SH" else "sz") + code)
+        url = "https://qt.gtimg.cn/q=" + ",".join(codes)
+        try:
+            request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(request, timeout=15) as response:
+                text = response.read().decode("gbk", "replace")
+            code_to_symbol = {symbol.split(".")[0]: symbol for symbol in batch}
+            for segment in text.strip().split(";"):
+                if "=" not in segment:
+                    continue
+                payload = segment.split("=", 1)[1].strip().strip('"')
+                parts = payload.split("~")
+                if len(parts) >= 3 and parts[2] in code_to_symbol:
+                    cache[code_to_symbol[parts[2]]] = parts[1]
+        except Exception as exc:
+            log("股票名称获取失败：{}".format(exc))
+    if cache:
+        temporary = NAME_CACHE.with_suffix(".json.tmp")
+        temporary.parent.mkdir(parents=True, exist_ok=True)
+        temporary.write_text(json.dumps(cache, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        temporary.replace(NAME_CACHE)
+    return {symbol: cache.get(symbol, symbol) for symbol in symbols}
 
 
 def latest_close(selector: StockSelector, symbol: str, target: date) -> Optional[float]:

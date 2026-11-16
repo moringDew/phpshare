@@ -104,6 +104,14 @@ class StockSelectionTest(unittest.TestCase):
                 price = 10.0 * (1.0 + rate) if i == jump_index else 10.0
                 writer.writerow([start + timedelta(days=i), "600000.SH", price, 5_000_000, 300 + i, 0, 0])
 
+    def test_limit_down_is_detected_from_adjusted_close(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bars.csv"
+            self._write_limit_fixture(path, 162, jump_index=161, rate=-0.10)
+            selector = StockSelector(load_bars(path), SelectionConfig(minimum_average_turnover=1.0))
+            self.assertTrue(selector.is_limit_down("600000.SH", selector.calendar[161]))
+            self.assertFalse(selector.is_limit_up("600000.SH", selector.calendar[161]))
+
     def test_limit_up_is_detected_from_adjusted_close(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bars.csv"

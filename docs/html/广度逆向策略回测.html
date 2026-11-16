@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>广度逆向策略回测</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0;padding-bottom:6px}.table-hint{font-size:13px;color:#69788c;margin:12px 0 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{width:max-content;min-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>广度逆向策略回测 · 目录</strong><a href="#section-1">基准：买入持有</a><a href="#section-2">参数组合排名（按全区间收益）</a><a href="#section-3">观察</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E5%B9%BF%E5%BA%A6%E9%80%86%E5%90%91%E7%AD%96%E7%95%A5%E5%9B%9E%E6%B5%8B.md">广度逆向策略回测.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">广度逆向策略回测</h1>
+<blockquote>规则：广度连续 N 天低于入场线时买入 ETF，广度回到出场线以上时卖出；其余时间持现金。<br>信号日收盘生成，下一交易日收盘成交；单边成本 0.15%；现金年化 1.5%。<br>区间：2024-02-08 至 2026-11-13；2026 单独列示。</blockquote>
+<h2 id="section-1">基准：买入持有</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>ETF</th>
+<th>代码</th>
+<th>全区间收益</th>
+<th>最大回撤</th>
+<th>2026 数据</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">沪深300ETF</td><td style="text-align:left">510300.SH</td><td style="text-align:right">+21.26%</td><td style="text-align:right">20.15%</td><td style="text-align:right">-15.84%</td></tr>
+<tr><td style="text-align:left">中证500ETF</td><td style="text-align:left">510500.SH</td><td style="text-align:right">+23.55%</td><td style="text-align:right">31.42%</td><td style="text-align:right">-16.77%</td></tr>
+<tr><td style="text-align:left">创业板ETF</td><td style="text-align:left">159915.SZ</td><td style="text-align:right">+45.05%</td><td style="text-align:right">45.32%</td><td style="text-align:right">-25.68%</td></tr>
+<tr><td style="text-align:left">红利ETF</td><td style="text-align:left">510880.SH</td><td style="text-align:right">+12.11%</td><td style="text-align:right">14.34%</td><td style="text-align:right">+5.94%</td></tr>
+<tr><td style="text-align:left">黄金ETF</td><td style="text-align:left">518880.SH</td><td style="text-align:right">+70.36%</td><td style="text-align:right">33.29%</td><td style="text-align:right">-16.36%</td></tr>
+</tbody></table></div>
+<h2 id="section-2">参数组合排名（按全区间收益）</h2>
+<div class="table-hint">表格较宽，可左右滑动查看全部列。</div>
+<div class="table-wrap"><table class="wide"><thead><tr>
+<th>排名</th>
+<th>ETF</th>
+<th>入场</th>
+<th>出场</th>
+<th>确认天数</th>
+<th>全区间收益</th>
+<th>最大回撤</th>
+<th>交易次数</th>
+<th>持仓时间</th>
+<th>2026 收益</th>
+</tr></thead><tbody>
+<tr><td style="text-align:right">1</td><td style="text-align:left">创业板ETF</td><td style="text-align:right">≤25%</td><td style="text-align:right">≥55%</td><td style="text-align:right">1</td><td style="text-align:right">+73.31%</td><td style="text-align:right">12.99%</td><td style="text-align:right">6</td><td style="text-align:right">30%</td><td style="text-align:right">+17.07%</td></tr>
+<tr><td style="text-align:right">2</td><td style="text-align:left">中证500ETF</td><td style="text-align:right">≤25%</td><td style="text-align:right">≥55%</td><td style="text-align:right">1</td><td style="text-align:right">+66.36%</td><td style="text-align:right">9.69%</td><td style="text-align:right">6</td><td style="text-align:right">30%</td><td style="text-align:right">+21.41%</td></tr>
+<tr><td style="text-align:right">3</td><td style="text-align:left">创业板ETF</td><td style="text-align:right">≤30%</td><td style="text-align:right">≥55%</td><td style="text-align:right">2</td><td style="text-align:right">+59.94%</td><td style="text-align:right">12.99%</td><td style="text-align:right">6</td><td style="text-align:right">31%</td><td style="text-align:right">+15.05%</td></tr>
+<tr><td style="text-align:right">4</td><td style="text-align:left">中证500ETF</td><td style="text-align:right">≤30%</td><td style="text-align:right">≥55%</td><td style="text-align:right">2</td><td style="text-align:right">+51.50%</td><td style="text-align:right">11.19%</td><td style="text-align:right">6</td><td style="text-align:right">31%</td><td style="text-align:right">+17.46%</td></tr>
+<tr><td style="text-align:right">5</td><td style="text-align:left">黄金ETF</td><td style="text-align:right">≤25%</td><td style="text-align:right">≥50%</td><td style="text-align:right">1</td><td style="text-align:right">+51.28%</td><td style="text-align:right">11.53%</td><td style="text-align:right">6</td><td style="text-align:right">29%</td><td style="text-align:right">+15.86%</td></tr>
+<tr><td style="text-align:right">6</td><td style="text-align:left">创业板ETF</td><td style="text-align:right">≤25%</td><td style="text-align:right">≥45%</td><td style="text-align:right">1</td><td style="text-align:right">+50.62%</td><td style="text-align:right">11.84%</td><td style="text-align:right">6</td><td style="text-align:right">21%</td><td style="text-align:right">+18.02%</td></tr>
+<tr><td style="text-align:right">7</td><td style="text-align:left">创业板ETF</td><td style="text-align:right">≤25%</td><td style="text-align:right">≥50%</td><td style="text-align:right">1</td><td style="text-align:right">+49.16%</td><td style="text-align:right">12.99%</td><td style="text-align:right">6</td><td style="text-align:right">29%</td><td style="text-align:right">+12.07%</td></tr>
+<tr><td style="text-align:right">8</td><td style="text-align:left">创业板ETF</td><td style="text-align:right">≤20%</td><td style="text-align:right">≥55%</td><td style="text-align:right">1</td><td style="text-align:right">+48.13%</td><td style="text-align:right">12.99%</td><td style="text-align:right">5</td><td style="text-align:right">23%</td><td style="text-align:right">-0.98%</td></tr>
+<tr><td style="text-align:right">9</td><td style="text-align:left">中证500ETF</td><td style="text-align:right">≤20%</td><td style="text-align:right">≥55%</td><td style="text-align:right">1</td><td style="text-align:right">+47.76%</td><td style="text-align:right">7.43%</td><td style="text-align:right">5</td><td style="text-align:right">23%</td><td style="text-align:right">+6.41%</td></tr>
+<tr><td style="text-align:right">10</td><td style="text-align:left">黄金ETF</td><td style="text-align:right">≤30%</td><td style="text-align:right">≥50%</td><td style="text-align:right">2</td><td style="text-align:right">+47.02%</td><td style="text-align:right">11.53%</td><td style="text-align:right">6</td><td style="text-align:right">29%</td><td style="text-align:right">+11.85%</td></tr>
+<tr><td style="text-align:right">11</td><td style="text-align:left">黄金ETF</td><td style="text-align:right">≤25%</td><td style="text-align:right">≥45%</td><td style="text-align:right">1</td><td style="text-align:right">+46.32%</td><td style="text-align:right">8.28%</td><td style="text-align:right">6</td><td style="text-align:right">21%</td><td style="text-align:right">+17.74%</td></tr>
+<tr><td style="text-align:right">12</td><td style="text-align:left">黄金ETF</td><td style="text-align:right">≤25%</td><td style="text-align:right">≥55%</td><td style="text-align:right">1</td><td style="text-align:right">+45.75%</td><td style="text-align:right">11.53%</td><td style="text-align:right">6</td><td style="text-align:right">30%</td><td style="text-align:right">+13.71%</td></tr>
+<tr><td style="text-align:right">13</td><td style="text-align:left">中证500ETF</td><td style="text-align:right">≤25%</td><td style="text-align:right">≥50%</td><td style="text-align:right">1</td><td style="text-align:right">+45.09%</td><td style="text-align:right">9.69%</td><td style="text-align:right">6</td><td style="text-align:right">29%</td><td style="text-align:right">+15.71%</td></tr>
+<tr><td style="text-align:right">14</td><td style="text-align:left">黄金ETF</td><td style="text-align:right">≤30%</td><td style="text-align:right">≥45%</td><td style="text-align:right">1</td><td style="text-align:right">+43.43%</td><td style="text-align:right">8.28%</td><td style="text-align:right">8</td><td style="text-align:right">26%</td><td style="text-align:right">+17.78%</td></tr>
+<tr><td style="text-align:right">15</td><td style="text-align:left">沪深300ETF</td><td style="text-align:right">≤25%</td><td style="text-align:right">≥55%</td><td style="text-align:right">1</td><td style="text-align:right">+43.10%</td><td style="text-align:right">10.33%</td><td style="text-align:right">6</td><td style="text-align:right">30%</td><td style="text-align:right">+9.01%</td></tr>
+<tr><td style="text-align:right">16</td><td style="text-align:left">黄金ETF</td><td style="text-align:right">≤20%</td><td style="text-align:right">≥50%</td><td style="text-align:right">1</td><td style="text-align:right">+42.50%</td><td style="text-align:right">11.53%</td><td style="text-align:right">5</td><td style="text-align:right">22%</td><td style="text-align:right">+8.08%</td></tr>
+<tr><td style="text-align:right">17</td><td style="text-align:left">黄金ETF</td><td style="text-align:right">≤30%</td><td style="text-align:right">≥50%</td><td style="text-align:right">1</td><td style="text-align:right">+42.49%</td><td style="text-align:right">11.53%</td><td style="text-align:right">7</td><td style="text-align:right">34%</td><td style="text-align:right">+11.36%</td></tr>
+<tr><td style="text-align:right">18</td><td style="text-align:left">黄金ETF</td><td style="text-align:right">≤30%</td><td style="text-align:right">≥45%</td><td style="text-align:right">2</td><td style="text-align:right">+42.19%</td><td style="text-align:right">9.10%</td><td style="text-align:right">6</td><td style="text-align:right">22%</td><td style="text-align:right">+13.66%</td></tr>
+<tr><td style="text-align:right">19</td><td style="text-align:left">创业板ETF</td><td style="text-align:right">≤30%</td><td style="text-align:right">≥55%</td><td style="text-align:right">1</td><td style="text-align:right">+41.67%</td><td style="text-align:right">21.62%</td><td style="text-align:right">7</td><td style="text-align:right">36%</td><td style="text-align:right">-5.12%</td></tr>
+<tr><td style="text-align:right">20</td><td style="text-align:left">黄金ETF</td><td style="text-align:right">≤30%</td><td style="text-align:right">≥55%</td><td style="text-align:right">2</td><td style="text-align:right">+41.64%</td><td style="text-align:right">11.53%</td><td style="text-align:right">6</td><td style="text-align:right">31%</td><td style="text-align:right">+9.77%</td></tr>
+</tbody></table></div>
+<h2 id="section-3">观察</h2>
+<ul>
+<li><p>广度极低时买入、回到 50% 附近卖出，本质是左侧抄底；收益高度依赖入场后是否继续下跌。</p></li>
+<li><p>如果某个参数只在 2026 年好、2024–2025 差，属于过拟合，不应直接采用。</p></li>
+<li><p>该策略只持有一只 ETF，波动和回撤通常低于单票，但可能长期跑输买入持有。</p></li>
+<li><p>当前广度 40.16%，不满足“极低”入场条件，因此当前状态是空仓/持现金。</p></li>
+</ul>
+<blockquote>以上为历史回测，不构成投资建议。</blockquote></main></div></body></html>

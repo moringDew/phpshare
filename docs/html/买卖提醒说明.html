@@ -8,12 +8,12 @@
 nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
 main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
 blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
-code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
-table.wide{white-space:nowrap;font-variant-numeric:tabular-nums}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0;padding-bottom:6px}.table-hint{font-size:13px;color:#69788c;margin:12px 0 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{width:max-content;min-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
 pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
 @media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
 @media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
-</style></head><body><div class="layout"><nav aria-label="目录"><strong>微信买卖提醒 · 目录</strong><a href="#section-1">提醒时间与渠道</a><a href="#section-2">提醒内容</a><a href="#section-3">时间与持仓口径</a><a href="#section-4">午间执行复核</a><a href="#section-5">文件与命令</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E4%B9%B0%E5%8D%96%E6%8F%90%E9%86%92%E8%AF%B4%E6%98%8E.md">买卖提醒说明.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">微信买卖提醒</h1>
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>微信买卖提醒 · 目录</strong><a href="#section-1">提醒时间与渠道</a><a href="#section-2">提醒内容</a><a href="#section-3">时间与持仓口径</a><a href="#section-4">午间执行复核</a><a href="#section-5">盘中实时预演</a><a href="#section-6">文件与命令</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E4%B9%B0%E5%8D%96%E6%8F%90%E9%86%92%E8%AF%B4%E6%98%8E.md">买卖提醒说明.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">微信买卖提醒</h1>
 <h2 id="section-1">提醒时间与渠道</h2>
 <ul>
 <li><p>渠道：已配置的 PushPlus 个人微信，不推送群组。</p></li>
@@ -50,7 +50,18 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <li><p>现价为 11:30 行情，13:00 后可能变化，下单前需再次核对。</p></li>
 <li><p>午间复核只调整执行，不改变 20:00 的收盘信号；实际成交价与回测的“次日收盘价”口径可能不同。</p></li>
 </ul>
-<h2 id="section-5">文件与命令</h2>
+<h2 id="section-5">盘中实时预演</h2>
+<ul>
+<li><p>时间：周一至周五 <strong>09:45–11:30、13:15–14:45，每 15 分钟</strong>一次；Windows 任务名 <code>QuantRealtimePreview</code>。</p></li>
+<li><p>做法：抓取 500 只股票实时行情，用当前价代替今日收盘价，重算市场广度和日频前 5 名。</p></li>
+<li><p>门槛：只有广度<strong>严格大于 50%</strong> 才给买入建议；否则显示空仓，不建议买入。</p></li>
+<li><p>每次推送：当前广度、风险状态、目标 5 只、较上次新增/剔除；涨停标“涨停，不追”，停牌标“无行情/停牌”。</p></li>
+<li><p>600869 远东股份单独跟踪，显示现价、成本、止损 12.40 和距止损幅度，不进入策略目标。</p></li>
+<li><p>盘中预演是<strong>日频重算</strong>；20:00 的 20 日调仓信号是另一条策略，两者不互相替代。盘中价不是收盘价，收盘后需再复核。</p></li>
+<li><p>默认每次运行都推送；如嫌频繁，可把任务改成 <code>--push-mode change</code>，只在目标变化时推送（14:45 仍会推）。</p></li>
+<li><p>报告：<code>docs/md/实时预演/YYYY-MM-DD.md</code> 和 <code>docs/html/实时预演/YYYY-MM-DD.html</code>；历史 <code>output/realtime_preview_YYYY-MM-DD.csv</code>；最新 <code>output/realtime_preview_latest.json</code>。</p></li>
+</ul>
+<h2 id="section-6">文件与命令</h2>
 <ul>
 <li><p>任务入口：<code>scripts/run_daily_breadth.ps1</code></p></li>
 <li><p>提醒生成：<code>python -I scripts/daily_breadth_report.py --signals-only</code></p></li>
@@ -60,10 +71,14 @@ pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-heigh
 <li><p>午间复核生成并推送：<code>python -I scripts/midday_check.py --send</code></p></li>
 <li><p>午间复核强制重发：加 <code>--force</code></p></li>
 <li><p>注册午间任务：<code>powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register_midday_task.ps1</code></p></li>
+<li><p>实时预演只生成：<code>python -I scripts/realtime_preview.py</code></p></li>
+<li><p>实时预演生成并推送：<code>python -I scripts/realtime_preview.py --send</code></p></li>
+<li><p>只在目标变化时推送：加 <code>--push-mode change</code></p></li>
+<li><p>注册实时预演任务：<code>powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register_realtime_task.ps1</code></p></li>
 <li><p>最新结果：<code>output/breadth_latest.json</code> 中的 <code>trade_alert</code>。</p></li>
-<li><p>推送去重：<code>output/last_trade_signal_push.json</code>（收盘提醒）、<code>output/last_midday_push.json</code>（午间复核）。</p></li>
-<li><p>日志：<code>output/logs/daily_breadth_YYYY-MM-DD.log</code>、<code>output/logs/midday_check_YYYY-MM-DD.log</code>。</p></li>
-<li><p>报告：<code>docs/md/市场广度日报/</code> 和 <code>docs/html/市场广度日报/</code>；午间复核在 <code>docs/md/午间复核/</code> 和 <code>docs/html/午间复核/</code>。</p></li>
-<li><p>午间结构化结果：<code>output/midday_check_YYYY-MM-DD.json</code>。</p></li>
+<li><p>推送去重：<code>output/last_trade_signal_push.json</code>（收盘提醒）、<code>output/last_midday_push.json</code>（午间复核）、<code>output/last_realtime_push.json</code>（实时预演同一时间槽）。</p></li>
+<li><p>日志：<code>output/logs/daily_breadth_YYYY-MM-DD.log</code>、<code>output/logs/midday_check_YYYY-MM-DD.log</code>、<code>output/logs/realtime_preview_YYYY-MM-DD.log</code>。</p></li>
+<li><p>报告：<code>docs/md/市场广度日报/</code> 和 <code>docs/html/市场广度日报/</code>；午间复核在 <code>docs/md/午间复核/</code> 和 <code>docs/html/午间复核/</code>；实时预演在 <code>docs/md/实时预演/</code> 和 <code>docs/html/实时预演/</code>。</p></li>
+<li><p>午间结构化结果：<code>output/midday_check_YYYY-MM-DD.json</code>；实时预演历史：<code>output/realtime_preview_YYYY-MM-DD.csv</code>。</p></li>
 </ul>
 <p>本功能仅发送提醒，不会连接券商提交订单。</p></main></div></body></html>

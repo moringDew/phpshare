@@ -11,13 +11,18 @@ def build_trade_alert(selector, result, day):
     is_limit_up = getattr(selector, 'is_limit_up', None)
     skipped_limit_up = list(getattr(result, 'pending_limit_up_symbols', []))
 
+    def change_pct(symbol):
+        change = getattr(selector, 'daily_change', None)
+        value = change(symbol, day) if change is not None else None
+        return round(value * 100.0, 2) if value is not None else None
+
     def sell(symbol, quantity, reason):
         nonlocal cash
         price = selector.by_date[day][symbol].close
         cash += quantity * price * (1 - config.transaction_cost_rate)
         positions[symbol] -= quantity
         orders.append(dict(side='SELL', symbol=symbol, shares=quantity,
-                           reference_price=price, reason=reason))
+                           reference_price=price, change_pct=change_pct(symbol), reason=reason))
 
     for symbol in result.pending_stop_symbols:
         if positions.get(symbol) and symbol in selector.by_date[day]:
@@ -42,7 +47,7 @@ def build_trade_alert(selector, result, day):
             if quantity > 0 and quantity * price * (1 + config.transaction_cost_rate) <= cash + 1e-9:
                 cash -= quantity * price * (1 + config.transaction_cost_rate)
                 orders.append(dict(side='BUY', symbol=symbol, shares=quantity,
-                                   reference_price=price, reason='rebalance'))
+                                   reference_price=price, change_pct=change_pct(symbol), reason='rebalance'))
     return dict(signal_date=day.isoformat(), basis='simulated_portfolio',
                 execution='next_session_close_reference', estimates=True,
                 rebalance=rebalance, actionable=rebalance or bool(orders),
@@ -67,8 +72,12 @@ def format_trade_alert(alert, names=None):
         lines.append('**' + label + '**')
         for row in rows:
             reason = '个股止损' if row['reason'] == 'stop' else '调仓'
-            lines.append('- {} {}：预计 {} 股｜参考价 {:.2f}｜{}'.format(
-                row['symbol'], names.get(row['symbol'], ''), row['shares'], row['reference_price'], reason))
+            change_text = ''
+            if row.get('change_pct') is not None:
+                change_text = '｜当日 {:+.2f}%'.format(float(row['change_pct']))
+            lines.append('- {} {}：预计 {} 股｜参考价 {:.2f}{}｜{}'.format(
+                row['symbol'], names.get(row['symbol'], ''), row['shares'],
+                row['reference_price'], change_text, reason))
     if alert.get('skipped_limit_up'):
         names_text = '、'.join(
             '{} {}'.format(symbol, names.get(symbol, '')) for symbol in alert['skipped_limit_up']
