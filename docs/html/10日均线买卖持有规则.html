@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>10 日均线买入、卖出与持有规则</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0;padding-bottom:6px}.table-hint{font-size:13px;color:#69788c;margin:12px 0 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{width:max-content;min-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>10 日均线买入、卖出与持有规则 · 目录</strong><a href="#section-1">交易规则</a><a href="#section-2">回测对照</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/10%E6%97%A5%E5%9D%87%E7%BA%BF%E4%B9%B0%E5%8D%96%E6%8C%81%E6%9C%89%E8%A7%84%E5%88%99.md">10日均线买卖持有规则.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">10 日均线买入、卖出与持有规则</h1>
+<blockquote>回测截至 2026-11-13。规则按日线收盘判断，适合独立模拟验证。</blockquote>
+<h2 id="section-1">交易规则</h2>
+<p>10 日线为最近 10 个有成交的日线收盘价的算术平均，包含当天收盘价。配合上一轮低波动模型，每 5 个交易日更新 15 只候选股；均线决定候选什么时候买卖。</p>
+<div class="table-wrap"><table><thead><tr>
+<th>当前状态</th>
+<th>收盘条件</th>
+<th>下一交易日</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">空仓，股票在候选名单内</td><td style="text-align:left">昨收在昨日 10 日均线或下方，今收高于今日 10 日均线</td><td style="text-align:left">买入</td></tr>
+<tr><td style="text-align:left">空仓</td><td style="text-align:left">已在线上但当天没有新上穿；或仍在线下</td><td style="text-align:left">继续等待</td></tr>
+<tr><td style="text-align:left">持有，股票仍在候选名单内</td><td style="text-align:left">今收在 10 日均线或上方</td><td style="text-align:left">继续持有</td></tr>
+<tr><td style="text-align:left">持有</td><td style="text-align:left">今收低于 10 日均线，或股票在定期更新时移出名单</td><td style="text-align:left">卖出</td></tr>
+</tbody></table></div>
+<p>盘中触碰不触发信号。实测以次日收盘模拟成交，信号与成交分开；停牌、无行情或接近涨跌停时阻止对应成交。买入信号未成交则等待新上穿；卖出受阻时继续持有，下一次仍符合卖出条件再尝试。定期调仓时统一按目标份额调整；非调仓日仅处理均线触发的进出。</p>
+<p>均线计算和常用穿越信号可参见 <a href="https://www.fidelity.com/learning-center/trading-investing/technical-analysis/technical-indicator-guide/sma">Fidelity 的简单移动平均线说明</a>。</p>
+<h2 id="section-2">回测对照</h2>
+<p>比较同一选股规则直接按 5 日调仓，与加入上述 10 日线进出。10 万元、85% 目标股票仓位、100 股整手、不加杠杆、单边成本 0.20%，各窗口测试五个起始相位。下表收益为按 252 个交易日折算的年化；范围覆盖五次独立起跑。</p>
+<div class="table-wrap"><table><thead><tr>
+<th>样本</th>
+<th>原规则年化</th>
+<th>10 日线年化</th>
+<th>原规则最大回撤</th>
+<th>10 日线最大回撤</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">2025，同花顺 800 只</td><td style="text-align:right">2.97%–15.84%</td><td style="text-align:right">−3.78%–1.59%</td><td style="text-align:right">4.33%–5.48%</td><td style="text-align:right">3.65%–5.35%</td></tr>
+<tr><td style="text-align:left">2026 年初至 11-13，同花顺 800 只</td><td style="text-align:right">2.44%–9.57%</td><td style="text-align:right">−4.88% 至 −0.47%</td><td style="text-align:right">7.71%–9.00%</td><td style="text-align:right">4.45%–5.95%</td></tr>
+<tr><td style="text-align:left">2025 至 2026-11-13，连续验证</td><td style="text-align:right">4.23%–9.54%</td><td style="text-align:right">−4.53%–0.04%</td><td style="text-align:right">8.50%–10.93%</td><td style="text-align:right">5.76%–8.73%</td></tr>
+<tr><td style="text-align:left">2026-01-26 至 11-13，东方财富 4,420 只</td><td style="text-align:right">−8.70%–2.73%</td><td style="text-align:right">−10.94% 至 −6.55%</td><td style="text-align:right">9.05%–13.08%</td><td style="text-align:right">6.58%–8.82%</td></tr>
+</tbody></table></div>
+<p><strong>结论：这套 10 日线规则降低了部分窗口的回撤，但没有提高收益。</strong> 在 800 只的连续窗口，首次起跑的成交笔数由 887 增至 1,193；在单边成本 0.40% 的压力测试中，10 日线年化进一步降至 −10.13% 至 −6.11%，且回撤优势不再明显。暂不建议用它替换现有规则，更没有验证到 20% 年化目标。</p>
+<p>结果仅适用于上述候选池、仓位和执行口径。行情数据的历史退市、ST 状态和实际滑点不完整。现有交易提醒和真实持仓未改动。</p>
+<p>复跑：<code>python scripts/research_ma10.py</code>；原始结果位于 <code>output/ma10_research.json</code>。</p></main></div></body></html>

@@ -43,6 +43,9 @@ class SelectionConfig:
     maximum_annualized_volatility: float = 0.65
     maximum_current_drawdown: float = 0.25
     market_breadth_lookback: int = 60
+    # 流动性候选池：每交易日从全市场按近 universe_lookback 日平均成交额取前 universe_size
+    universe_size: int = 500
+    universe_lookback: int = 20
     minimum_market_breadth: float = 0.50
     maximum_equity_exposure: float = 0.45
     initial_capital: float = 100_000.0
@@ -218,6 +221,10 @@ class StockSelector:
             return True
         allowed = self.allowed_by_date.get(on_date)
         return allowed is None or symbol in allowed
+
+    def in_universe(self, symbol: str, on_date: date) -> bool:
+        """该股票当天是否属于流动性候选池；未配置候选池时全部算在内。"""
+        return self._is_allowed(symbol, on_date)
 
     def daily_change(self, symbol: str, on_date: date) -> Optional[float]:
         """Adjusted close-to-close change, using the previous available bar."""

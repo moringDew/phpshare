@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>指数择时 → 板块轮动 → 个股选择</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0;padding-bottom:6px}.table-hint{font-size:13px;color:#69788c;margin:12px 0 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{width:max-content;min-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>指数择时 → 板块轮动 → 个股选择 · 目录</strong><a href="#section-1">本次的三层规则</a><a href="#section-2">分层结果</a><a href="#section-3">数据与复跑</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E6%8C%87%E6%95%B0%E6%9D%BF%E5%9D%97%E4%B8%AA%E8%82%A1%E4%B8%89%E5%B1%82%E9%AA%8C%E8%AF%81_2026-11-17.md">指数板块个股三层验证_2026-11-17.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">指数择时 → 板块轮动 → 个股选择</h1>
+<blockquote>2026-11-17 研究。回测截至 2026-11-13。</blockquote>
+<h2 id="section-1">本次的三层规则</h2>
+<ol>
+<li><p><strong>指数决定仓位。</strong> 沪深 300 和中证 500 分别和自己的 60 日均线比较。都站上设股票目标仓位 85%，仅一个站上设 42.5%，都未站上设 0%。指数只是信号，组合只买股票。</p></li>
+<li><p><strong>板块决定买入范围。</strong> 用信号时已经有记录的最近一份季度行业快照。把各行业成分股的 20 日和 60 日收益各做等权平均，与两只指数同口径比较，只考虑相对收益为正的行业，最多选最强的 4 个。行业需有至少 5 只有历史和当日有效行情的股票。</p></li>
+<li><p><strong>个股决定持仓。</strong> 入选行业内沿用上一轮已冻结的低波动与相对强弱打分，每行业最多 4 只，总计最多 15 只，缺名额不补满。每 5 个交易日收盘按上述顺序检查，次日模拟收盘成交。没有再叠加个股 10 日线或分时低点规则，便于看清三个环节各做了什么。</p></li>
+</ol>
+<p>10 万元起始，100 股整手，单边费用 0.20%，无杠杆。模拟跳过接近涨跌停、停牌或无有效行情的订单。</p>
+<h2 id="section-2">分层结果</h2>
+<p>每个场景分别测试五个调仓起点。800 只样本为 2026 年初至 11-13，4,420 只样本为 01-26 至 11-13，两者开始日期不同，判断某层的作用时应在各自股票池内比较。</p>
+<div class="table-wrap"><table><thead><tr>
+<th>策略</th>
+<th>800 只年化</th>
+<th>800 只最大回撤</th>
+<th>4,420 只年化</th>
+<th>4,420 只最大回撤</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">只选股，目标 85%</td><td style="text-align:right">2.44% 至 9.57%</td><td style="text-align:right">7.71%–9.00%</td><td style="text-align:right">−8.70% 至 2.73%</td><td style="text-align:right">9.05%–13.08%</td></tr>
+<tr><td style="text-align:left">固定半仓对照，目标 42.5%</td><td style="text-align:right">1.14% 至 4.39%</td><td style="text-align:right">3.14%–3.60%</td><td style="text-align:right">−2.77% 至 1.23%</td><td style="text-align:right">3.63%–5.68%</td></tr>
+<tr><td style="text-align:left">指数择时 → 个股</td><td style="text-align:right">−5.22% 至 1.20%</td><td style="text-align:right">5.16%–8.62%</td><td style="text-align:right">−5.07% 至 0.56%</td><td style="text-align:right">5.78%–9.44%</td></tr>
+<tr><td style="text-align:left">板块筛选 → 个股</td><td style="text-align:right">−12.72% 至 −4.53%</td><td style="text-align:right">17.94%–25.23%</td><td style="text-align:right">−17.88% 至 −7.12%</td><td style="text-align:right">16.75%–23.64%</td></tr>
+<tr><td style="text-align:left">指数择时 → 板块筛选 → 个股</td><td style="text-align:right"><strong>−18.93% 至 −9.53%</strong></td><td style="text-align:right">10.70%–20.22%</td><td style="text-align:right"><strong>−18.37% 至 −2.39%</strong></td><td style="text-align:right">10.47%–18.09%</td></tr>
+</tbody></table></div>
+<p>这版指数开关降低了仓位，但在两套股票池里都没胜过固定半仓的回撤表现。板块层单独启用时，收益下降、最大回撤反而上升；这是对本次严格集中在最强四个行业的直接否定，不足以否定全部行业排序方法。全开三层后，在扩大股票池的样本里，单边成本升到 0.40% 时，年化进一步下降到 <strong>−20.21% 至 −5.10%</strong>。</p>
+<p>这一版不接入交易提醒。下一轮如果继续用三层框架，优先将指数信号设为仓位上限，比较固定低仓位；行业相对强弱作为个股的加分项，同时限制行业集中度。先在不改个股规则的情况下分别检验是否有增益，再决定要不要叠加。</p>
+<h2 id="section-3">数据与复跑</h2>
+<p>沪深 300 和中证 500 用 BaoStock 指数日线，2026 年用 2025 年末起的四份季度归属，用的是 <a href="https://www.baostock.com/mainContent?file=stockIndustry.md">BaoStock 按日期查询的证监会行业分类</a>，行业强弱用股票行情计算。实际归属覆盖同花顺约 786–796 只、东方财富约 4,371–4,414 只。季度归属不能反映季内变化；本地股票文件仍有退市、历史状态和前复权成交价格的限制。因此上述结果不能视为无偏的全历史估计。</p>
+<p>复跑 2026 对照：先执行 <code>python scripts/sync_rotation_inputs.py --recent</code> 下载指数和行业归属，再执行 <code>python scripts/research_sector_rotation.py --industry data/rotation/industry_recent.csv --window 2026 --output output/sector_rotation_2026.json</code>。已取得的快照按季度缓存。</p></main></div></body></html>

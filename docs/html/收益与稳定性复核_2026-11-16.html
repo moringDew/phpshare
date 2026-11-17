@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A 股策略收益与稳定性复核</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0;padding-bottom:6px}.table-hint{font-size:13px;color:#69788c;margin:12px 0 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{width:max-content;min-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>A 股策略收益与稳定性复核 · 目录</strong><a href="#section-1">结论</a><a href="#section-2">连续回测</a><a href="#section-3">调仓日期敏感性</a><a href="#section-4">数据和复跑</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E6%94%B6%E7%9B%8A%E4%B8%8E%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%A4%8D%E6%A0%B8_2026-11-16.md">收益与稳定性复核_2026-11-16.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">A 股策略收益与稳定性复核</h1>
+<blockquote>回测截至 2026-11-16。本次以当前动态股票池的 5 只、40% 广度门槛策略为基线。</blockquote>
+<h2 id="section-1">结论</h2>
+<p>优先在模拟盘观察双组错峰方案。连续回测中，它同时改善了收益、最大回撤和波动；在 7 月至 11 月的两个独立起跑对照中，回撤和波动均低于原策略，收益则一好一坏，且两个起点都亏损。证据足以进入并行观察，暂不足以替换当前提醒参数。</p>
+<p>缩短至 10 日调仓是连续回测中收益最高的方案，但上半年表现强、下半年容易反转，波动和交易次数均上升。单纯放宽止损或把持仓增加至 8 只也没有稳定改善两项指标。</p>
+<h2 id="section-2">连续回测</h2>
+<p>2026-01-05 至 2026-11-16，初始资金 10 万元。下表收益为区间累计收益，波动为日收益标准差年化，回撤以正数表示。交易数按买卖成交笔数计。</p>
+<div class="table-wrap"><table><thead><tr>
+<th>方案</th>
+<th>累计收益</th>
+<th>最大回撤</th>
+<th>年化波动</th>
+<th>成交笔数</th>
+<th>单边成本翻倍后收益</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">原策略：5 只 / 20 日</td><td style="text-align:right">-3.74%</td><td style="text-align:right">8.18%</td><td style="text-align:right">8.52%</td><td style="text-align:right">52</td><td style="text-align:right">-4.13%</td></tr>
+<tr><td style="text-align:left">分散至 8 只 / 单票上限 7.5%</td><td style="text-align:right">-6.86%</td><td style="text-align:right">8.88%</td><td style="text-align:right">7.04%</td><td style="text-align:right">70</td><td style="text-align:right">-7.49%</td></tr>
+<tr><td style="text-align:left">提高低波动和低回撤权重</td><td style="text-align:right">-5.07%</td><td style="text-align:right">9.67%</td><td style="text-align:right">7.56%</td><td style="text-align:right">59</td><td style="text-align:right">-5.79%</td></tr>
+<tr><td style="text-align:left">8 只 + 提高低风险权重</td><td style="text-align:right">-9.79%</td><td style="text-align:right">13.60%</td><td style="text-align:right">6.22%</td><td style="text-align:right">78</td><td style="text-align:right">-10.32%</td></tr>
+<tr><td style="text-align:left">10 日调仓</td><td style="text-align:right">+2.30%</td><td style="text-align:right">7.67%</td><td style="text-align:right">10.14%</td><td style="text-align:right">84</td><td style="text-align:right">+1.21%</td></tr>
+<tr><td style="text-align:left">放宽止损至 12%</td><td style="text-align:right">-3.55%</td><td style="text-align:right">10.57%</td><td style="text-align:right">9.95%</td><td style="text-align:right">52</td><td style="text-align:right">-4.21%</td></tr>
+<tr><td style="text-align:left">广度门槛提高至 50%</td><td style="text-align:right">-3.77%</td><td style="text-align:right">8.18%</td><td style="text-align:right">8.28%</td><td style="text-align:right">42</td><td style="text-align:right">-4.03%</td></tr>
+<tr><td style="text-align:left"><strong>双组错峰</strong></td><td style="text-align:right"><strong>+1.34%</strong></td><td style="text-align:right"><strong>6.15%</strong></td><td style="text-align:right"><strong>5.52%</strong></td><td style="text-align:right"><strong>72</strong></td><td style="text-align:right"><strong>+0.88%</strong></td></tr>
+</tbody></table></div>
+<p>双组错峰把 10 万元分成两组，各自沿用原策略的 5 只、20 日调仓、40% 股票仓位上限和 8% 止损。第二组延后 10 个交易日启用，启用前的备用资金按原值计；此后两组分别计算现金收益。两组可以持有同一股票，整手限制在每组内计算；它减少对单个调仓日的依赖，未限制两组之间的股票重叠。</p>
+<h2 id="section-3">调仓日期敏感性</h2>
+<p>每段从空仓重启；首日与延后 5 个交易日分别跑一次。区间不可与连续回测拼接。单边成本 0.15%。</p>
+<div class="table-wrap"><table><thead><tr>
+<th>区间</th>
+<th>首次信号</th>
+<th>原策略收益 / 回撤</th>
+<th>10 日收益 / 回撤</th>
+<th>双组错峰收益 / 回撤</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">1 月至 6 月</td><td style="text-align:left">01-05</td><td style="text-align:right">+0.06% / 8.18%</td><td style="text-align:right">+9.64% / 5.54%</td><td style="text-align:right">+3.41% / 3.61%</td></tr>
+<tr><td style="text-align:left">1 月至 6 月</td><td style="text-align:left">01-12</td><td style="text-align:right">+1.64% / 7.72%</td><td style="text-align:right">+12.40% / 5.12%</td><td style="text-align:right">+2.23% / 2.63%</td></tr>
+<tr><td style="text-align:left">7 月至 11 月</td><td style="text-align:left">07-01</td><td style="text-align:right">-0.25% / 2.21%</td><td style="text-align:right">-4.81% / 5.52%</td><td style="text-align:right">-0.85% / 2.13%</td></tr>
+<tr><td style="text-align:left">7 月至 11 月</td><td style="text-align:left">07-08</td><td style="text-align:right">-1.78% / 2.39%</td><td style="text-align:right">-1.23% / 2.39%</td><td style="text-align:right">-0.11% / 1.19%</td></tr>
+</tbody></table></div>
+<h2 id="section-4">数据和复跑</h2>
+<ul>
+<li><p>使用本地 a_share_all.csv：4420 只证券、1,315,605 条记录，行情范围 2025-07-10 至 2026-11-17；截止日设为 11 月 16 日，留出历史数据计算因子。每天按当时成交额筛选候选池；可回看的证券全集仍受数据源当时可提供的名单限制。</p></li>
+<li><p>沿用资金回测口径：收盘信号、下一交易日模拟收盘成交、100 股整手、涨跌停成交过滤、现金年化 1.5%。缺行情日按最近收盘价估值，缺行情或显式停牌时不成交。前复权价格、历史 ST 和停牌信息不完整，回测不能完整还原真实成交。</p></li>
+<li><p>旧汇总包含不同时段、数据和回测口径；本报告的基线值仅用于本次同口径比较。验证段较短，且方案已经在同一份历史上对照过，需要再用未来数据验证；比较多个规则会抬高偶然优胜的概率，参见 <a href="https://escholarship.org/uc/item/4w1110bb">回测过拟合研究</a>。</p></li>
+<li><p>运行 <code>python scripts/research_strategy_stability.py</code>，得到各窗口、调仓起点及两档成本下的完整指标，默认输出到 <code>output/strategy_stability.json</code>。</p></li>
+</ul>
+<p>建议把现行策略和双组错峰放在同一时钟下观察，并记录实际可成交价格和费用；至少跑完多个完整调仓周期，再比较累计收益、回撤、波动和交易成本。现有提醒配置与真实持仓未改动。</p></main></div></body></html>

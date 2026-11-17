@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>个股未来 20 个交易日涨跌预测</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0;padding-bottom:6px}.table-hint{font-size:13px;color:#69788c;margin:12px 0 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{width:max-content;min-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>个股未来 20 个交易日涨跌预测 · 目录</strong><a href="#section-1">怎么预测</a><a href="#section-2">验证结果</a><a href="#section-3">提高命中率的试验：滚动校正</a><a href="#section-4">增加大盘和行业特征</a><a href="#section-5">最新观察名单</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E4%B8%AA%E8%82%A120%E4%BA%A4%E6%98%93%E6%97%A5%E6%B6%A8%E8%B7%8C%E9%A2%84%E6%B5%8B_2026-11-16.md">个股20交易日涨跌预测_2026-11-16.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">个股未来 20 个交易日涨跌预测</h1>
+<blockquote>信号使用截至 2026-11-16 的日线收盘数据。符合历史长度、价格和流动性要求的股票共 3,903 只。</blockquote>
+<h2 id="section-1">怎么预测</h2>
+<p>使用最近 1 / 5 / 10 / 20 / 60 日涨跌、相对强弱、10 / 20 / 60 日均线距离、20 日波动、60 日回撤、近期放量和涨跌日成交量差等指标。现有两份日线只有收盘价和成交量，没有开盘、最高、最低，所以没有使用影线或实体形态。</p>
+<p>模型同时输出两个值：上涨概率原始值和涨跌排序分数。上涨定义为 <strong>信号次日收盘买入后，再过 20 个交易日的收盘价高于买入价</strong>。预测端只用信号日前已结算的训练标签，不用随机拆分；按时间拆分的理由可见 <a href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html">scikit-learn 时间序列验证说明</a>。2025 / 2026 分别用更早的数据训练，下面的最新排名沿用 2026 冻结模型。</p>
+<h2 id="section-2">验证结果</h2>
+<p>每个信号日先按预测分数排出前 10%，再检查 20 日后表现。下表收益是组内等权的平均涨跌，<strong>未扣交易成本</strong>，不是组合回测。缺入场或退场行情的标签无法观察，大股票池中前 10% 的可观察率约 99.87%。</p>
+<div class="table-wrap"><table><thead><tr>
+<th>验证样本</th>
+<th>排序相关（IC）</th>
+<th>上涨识别（AUC）</th>
+<th>前 10% 实际收益</th>
+<th>当日候选整体收益</th>
+<th>相对差</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">800 只，2025</td><td style="text-align:right">0.081</td><td style="text-align:right">0.583</td><td style="text-align:right">+5.05%</td><td style="text-align:right">+4.25%</td><td style="text-align:right">+0.80 个百分点</td></tr>
+<tr><td style="text-align:left">800 只，2026 同期</td><td style="text-align:right">0.111</td><td style="text-align:right">0.578</td><td style="text-align:right">+1.77%</td><td style="text-align:right">+0.28%</td><td style="text-align:right">+1.49 个百分点</td></tr>
+<tr><td style="text-align:left">4,420 只，2026 同期</td><td style="text-align:right">0.131</td><td style="text-align:right">0.591</td><td style="text-align:right">−1.00%</td><td style="text-align:right">−1.85%</td><td style="text-align:right">+0.85 个百分点</td></tr>
+</tbody></table></div>
+<p>AUC 为 0.5 时相当于随机排序。当前结果表明模型能提供一定的相对强弱信息；行情偏弱时，排在前面的一组也可能整体下跌。</p>
+<p>按上涨概率 <strong>≥ 50% 判上涨</strong>，否则判“不涨”（包含持平），实际方向命中率如下。均衡准确率把“实际上涨时猜对”和“实际不涨时猜对”两项各赋一半权重。</p>
+<div class="table-wrap"><table><thead><tr>
+<th>验证样本</th>
+<th>总命中率</th>
+<th>实际上涨的识别率</th>
+<th>实际不涨的识别率</th>
+<th>均衡准确率</th>
+<th>全部猜不涨</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">800 只，2025</td><td style="text-align:right">46.13%</td><td style="text-align:right">10.67%</td><td style="text-align:right">94.72%</td><td style="text-align:right">52.69%</td><td style="text-align:right">42.19%</td></tr>
+<tr><td style="text-align:left">800 只，2026 同期</td><td style="text-align:right">56.26%</td><td style="text-align:right">48.23%</td><td style="text-align:right">62.43%</td><td style="text-align:right">55.33%</td><td style="text-align:right">56.50%</td></tr>
+<tr><td style="text-align:left">4,420 只，2026 同期</td><td style="text-align:right">57.65%</td><td style="text-align:right">50.91%</td><td style="text-align:right">61.89%</td><td style="text-align:right">56.40%</td><td style="text-align:right">61.31%</td></tr>
+</tbody></table></div>
+<p>2026 年大股票池的总命中率低于全部猜不涨；2025 年全部猜上涨的命中率则为 57.81%，高于模型的 46.13%。这些固定方向的命中率用来展示样本涨跌比例，并不代表事前知道应该猜哪边。</p>
+<p><strong>概率随市场阶段偏移。</strong> 在 2026 年大股票池里，模型给出 60%–70% 原始概率的样本，实际约 50.1% 上涨；模型给出至少 70% 的样本，平均报出 81.7%，实际约 71.3% 上涨。2025 年则出现低估偏差，不能用一次固定修正把分数当成个股真实概率。滚动 20 日结果彼此重叠，股票也不是独立样本；不应把数量当作独立预测次数。</p>
+<h2 id="section-3">提高命中率的试验：滚动校正</h2>
+<p>冻结原模型，只用信号日之前已结算的最近 60 个到期交易日对上涨概率整体做一次校正；结算日不足 20 个则沿用原概率。比较时保持同一批股票、同一标签和 50% 判断线。基准只按已结算样本的近期上涨率判方向，相当于不区分个股。</p>
+<div class="table-wrap"><table><thead><tr>
+<th>验证样本</th>
+<th>原版命中率</th>
+<th>校正后命中率</th>
+<th>近期上涨率基准</th>
+<th>原版均衡准确率</th>
+<th>校正后均衡准确率</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">800 只，2025</td><td style="text-align:right">46.13%</td><td style="text-align:right">49.25%</td><td style="text-align:right">47.19%</td><td style="text-align:right">52.69%</td><td style="text-align:right">46.49%</td></tr>
+<tr><td style="text-align:left">800 只，2026</td><td style="text-align:right">56.26%</td><td style="text-align:right">56.20%</td><td style="text-align:right">56.50%</td><td style="text-align:right">55.33%</td><td style="text-align:right">53.03%</td></tr>
+<tr><td style="text-align:left">4,420 只，2026</td><td style="text-align:right">57.65%</td><td style="text-align:right">61.34%</td><td style="text-align:right">61.08%</td><td style="text-align:right">56.40%</td><td style="text-align:right">53.28%</td></tr>
+</tbody></table></div>
+<p>大股票池的命中率提高 3.69 个百分点，但只比近期上涨率基准高 0.26 个百分点，而且后半年的命中率从 63.35% 降到 60.73%。三个窗口的均衡准确率均下降，不能说更擅长区分上涨与不涨。当前不采用校正版，最新观察名单及预测 CSV 保持原模型口径。</p>
+<p>已用单元测试核对：修改一个尚未结算的历史结果，不能影响结算日前和结算当天的校正值。上述历史时期已经用于上一轮复盘，不能视为全新的独立样本；下一步应冻结规则，在未来结算的预测上检验，避免继续挑校正窗口。</p>
+<h2 id="section-4">增加大盘和行业特征</h2>
+<p>大盘特征使用沪深 300 和中证 500 的 5 / 20 日收益、60 日均线距离和 20 日波动。行业特征用已经发布的上一份行业快照计算同行 5 / 20 日收益、上涨比例和个股相对同行的偏离，计算同行表现时排除被预测股票自身。行业收益有别于单只股票收益，这里仅借鉴 <a href="https://onlinelibrary.wiley.com/doi/10.1111/0022-1082.00146">行业动量研究</a> 的问题设定，增益以本地回测为准。</p>
+<p>五组使用相同模型结构、50% 判断线和完全相同的训练与验证日期。为保证行业历史与样本一致，训练信号统一从 2023-01-03 开始，因此本节重新训练的纯个股基线会和上文略有不同。训练只使用在验证期开始前已结算的标签。</p>
+<div class="table-wrap"><table><thead><tr>
+<th>加入的特征</th>
+<th>2025 年 800 只：命中 / 均衡</th>
+<th>2026 年 800 只：命中 / 均衡</th>
+<th>2026 年 4,420 只：命中 / 均衡</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">仅个股</td><td style="text-align:right">46.49% / 52.82%</td><td style="text-align:right">56.17% / 55.78%</td><td style="text-align:right">56.68% / 56.48%</td></tr>
+<tr><td style="text-align:left">仅大盘</td><td style="text-align:right">45.58% / 49.66%</td><td style="text-align:right">60.38% / 59.62%</td><td style="text-align:right">62.98% / 61.97%</td></tr>
+<tr><td style="text-align:left">个股 + 大盘</td><td style="text-align:right">47.33% / 50.80%</td><td style="text-align:right">60.58% / 60.05%</td><td style="text-align:right">62.72% / 62.32%</td></tr>
+<tr><td style="text-align:left">个股 + 行业</td><td style="text-align:right">46.79% / 52.82%</td><td style="text-align:right">56.14% / 55.48%</td><td style="text-align:right">56.40% / 55.86%</td></tr>
+<tr><td style="text-align:left">个股 + 大盘 + 行业</td><td style="text-align:right">47.92% / 51.00%</td><td style="text-align:right">59.62% / 59.37%</td><td style="text-align:right">62.02% / 62.18%</td></tr>
+</tbody></table></div>
+<p>2026 年大股票池中，加入大盘将总命中率和均衡准确率分别提高 6.04 和 5.84 个百分点；但仅大盘的总命中率更高，而且它对所有个股给出同一天完全相同的判断。按同日相对强弱看，个股加大盘的平均排序相关从 0.137 提到 0.152，只是小幅改善。2025 年则出现均衡准确率下降，2026 年大股票池下半段中个股加大盘的均衡准确率也低于原版（63.03% 对 64.20%）。行业特征没有提供跨窗口的稳定增益。</p>
+<p>保留原观察名单。可以另把大盘模型作为市场环境参考，并冻结规则等待未来数据；不采用任何组合替换个股方向预测。本轮是旧窗口上的边际对照，800 只和 4,420 只的同期样本并非独立。下一类更值得尝试的是严格按公告公开时间对齐的业绩预告、盈利变化等信息；本轮没有这类数据，未将它们计入增益。</p>
+<p>复跑：<code>python scripts/research_forecast_features.py</code>。各组分期命中率、概率误差和排序指标位于 <code>output/forecast20_feature_ablation.json</code>。</p>
+<h2 id="section-5">最新观察名单</h2>
+<p>以下是原始排序分数最强和最弱的例子。表中分数只用来排序；模型回归时限制了极端训练标签，不能把输出当作个股的承诺涨跌幅。请用数据中的证券代码查询所关心的个股。</p>
+<div class="table-wrap"><table><thead><tr>
+<th>方向</th>
+<th>证券代码</th>
+<th>11-16 收盘（元）</th>
+<th>原始涨跌分数（百分比尺度）</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">排名前列</td><td style="text-align:left">301511.SZ</td><td style="text-align:right">50.48</td><td style="text-align:right">+14.27%</td></tr>
+<tr><td style="text-align:left">排名前列</td><td style="text-align:left">300684.SZ</td><td style="text-align:right">53.39</td><td style="text-align:right">+12.48%</td></tr>
+<tr><td style="text-align:left">排名前列</td><td style="text-align:left">300903.SZ</td><td style="text-align:right">56.06</td><td style="text-align:right">+12.14%</td></tr>
+<tr><td style="text-align:left">排名后列</td><td style="text-align:left">301578.SZ</td><td style="text-align:right">35.60</td><td style="text-align:right">−5.54%</td></tr>
+<tr><td style="text-align:left">排名后列</td><td style="text-align:left">600715.SH</td><td style="text-align:right">3.74</td><td style="text-align:right">−4.92%</td></tr>
+<tr><td style="text-align:left">排名后列</td><td style="text-align:left">603366.SH</td><td style="text-align:right">12.51</td><td style="text-align:right">−3.93%</td></tr>
+</tbody></table></div>
+<p>全市场覆盖结果在 <code>output/forecast20_stocks.csv</code>，验证和概率分档在 <code>output/forecast20_validation.json</code>。命令：<code>python scripts/research_stock_forecast20.py</code>；只看特定股票可加 <code>--symbol 600519.SH</code>。这份模型用于观察，不触发现有提醒或下单。</p>
+<p>复跑环境需要 NumPy、pandas、scikit-learn 和 threadpoolctl，输入为 <code>data/ths_daily_combined_800.csv</code> 和本地 <code>data/a_share_all.csv</code>。后者未随代码分发；复跑历史数字需准备相同截止日和覆盖范围的股票行情。大盘和行业对照另需 BaoStock，运行 <code>python scripts/sync_rotation_inputs.py</code> 获取指数与行业数据。</p></main></div></body></html>

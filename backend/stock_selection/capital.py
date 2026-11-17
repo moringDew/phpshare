@@ -36,7 +36,8 @@ class CapitalBacktestResult:
 
 def target_shares(selector: StockSelector, on_date: date, symbols: Sequence[str], total_equity: float) -> Dict[str, int]:
     config = selector.config
-    symbols = [symbol for symbol in symbols if symbol in selector.by_date.get(on_date, {})]
+    bars = selector.by_date.get(on_date, {})
+    symbols = [symbol for symbol in symbols if symbol in bars and not bars[symbol].suspended]
     if not symbols:
         return {}
     total_limit = total_equity * config.maximum_equity_exposure
@@ -80,6 +81,7 @@ def run_capital_backtest(
     cash = float(capital)
     shares: Dict[str, int] = {}
     average_cost: Dict[str, float] = {}
+    last_close: Dict[str, float] = {}
     stop_pending: Set[str] = set()
     pending_symbols: Optional[List[str]] = None
     pending_signal: Optional[date] = None
@@ -103,12 +105,15 @@ def run_capital_backtest(
     def blocked_by_limit_up(symbol: str, on_date: date) -> bool:
         return bool(skip_limit_up and is_limit_up is not None and is_limit_up(symbol, on_date))
 
-    def equity(on_date: date) -> float:
-        return cash + sum(
-            quantity * selector.by_date[on_date][symbol].close
+    def position_value(on_date: date) -> float:
+        bars = selector.by_date[on_date]
+        return sum(
+            quantity * (bars[symbol].close if symbol in bars else last_close[symbol])
             for symbol, quantity in shares.items()
-            if symbol in selector.by_date[on_date]
         )
+
+    def equity(on_date: date) -> float:
+        return cash + position_value(on_date)
 
     daily_cash_rate = config.cash_yield_annual / 252.0
     for index, current_date in enumerate(calendar):
@@ -121,7 +126,7 @@ def run_capital_backtest(
                     stop_pending.discard(symbol)
                     continue
                 bar = selector.by_date.get(current_date, {}).get(symbol)
-                if bar is None:
+                if bar is None or bar.suspended:
                     continue
                 if skip_limit_down and is_limit_down is not None and is_limit_down(symbol, current_date):
                     limit_down_skips.append({
@@ -156,7 +161,7 @@ def run_capital_backtest(
                 if new >= old:
                     continue
                 bar = selector.by_date.get(current_date, {}).get(symbol)
-                if bar is None:
+                if bar is None or bar.suspended:
                     continue
                 if skip_limit_down and is_limit_down is not None and is_limit_down(symbol, current_date):
                     limit_down_skips.append({
@@ -217,16 +222,12 @@ def run_capital_backtest(
             pending_limit_up_symbols = []
         if pending_topup:
             exposure_limit = equity(current_date) * config.maximum_equity_exposure
-            current_exposure = sum(
-                quantity * selector.by_date[current_date][symbol].close
-                for symbol, quantity in shares.items()
-                if symbol in selector.by_date.get(current_date, {})
-            )
+            current_exposure = position_value(current_date)
             for symbol, quantity in sorted(pending_topup.items()):
                 if symbol in stop_blocked:
                     continue
                 bar = selector.by_date.get(current_date, {}).get(symbol)
-                if bar is None or blocked_by_limit_up(symbol, current_date):
+                if bar is None or bar.suspended or blocked_by_limit_up(symbol, current_date):
                     continue
                 price = bar.close
                 affordable = int(cash // (price * config.lot_size)) * config.lot_size
@@ -287,11 +288,7 @@ def run_capital_backtest(
                     pending_signal = current_date
         elif (cash_deploy_breadth is not None and cash > 0 and pending_symbols is None
               and not stop_pending):
-            current_exposure = sum(
-                quantity * selector.by_date[current_date][symbol].close
-                for symbol, quantity in shares.items()
-                if symbol in selector.by_date.get(current_date, {})
-            )
+            current_exposure = position_value(current_date)
             target_exposure = equity(current_date) * config.maximum_equity_exposure
             if (current_exposure < target_exposure * 0.95
                     and last_target_symbols
@@ -308,6 +305,11 @@ def run_capital_backtest(
                     pending_topup = buys
         if shares:
             invested_days += 1
+        last_close = {
+            symbol: selector.by_date[current_date][symbol].close
+            if symbol in selector.by_date[current_date] else last_close[symbol]
+            for symbol in shares
+        }
         curve.append({"date": current_date.isoformat(), "equity": equity(current_date), "cash": cash, "positions": len(shares)})
 
     peak = capital

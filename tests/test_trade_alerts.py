@@ -20,7 +20,7 @@ class FixtureSelector:
     def __init__(self, prices, rebalance=20, breadth=1.0, limit_up=()):
         self.calendar = [date(2026, 1, 5) + timedelta(days=i) for i in range(len(prices))]
         self.limit_up = set(limit_up)
-        self.by_date = {day: {'AAA': SimpleNamespace(close=price)}
+        self.by_date = {day: {'AAA': SimpleNamespace(close=price, suspended=False)}
                         for day, price in zip(self.calendar, prices)}
         self.config = SimpleNamespace(initial_capital=100000, maximum_equity_exposure=.4,
                                       maximum_single_position=.1, lot_size=100,
@@ -63,6 +63,22 @@ class TradeAlertTests(unittest.TestCase):
                          [('SELL', 'stop', 1000)])
         result, _ = self.alert(selector, 3)
         self.assertEqual(result.final_positions, {})
+
+    def test_missing_quote_keeps_position_value_without_allowing_sale(self):
+        selector = FixtureSelector([10, 10, 10, 10, 10], rebalance=2)
+        selector.config.cash_yield_annual = 0
+        selector.by_date[selector.calendar[3]].clear()
+        result = run_capital_backtest(selector, selector.calendar[0])
+        self.assertEqual(result.final_positions, {'AAA': 1000})
+        self.assertEqual([trade['side'] for trade in result.trades], ['BUY'])
+        self.assertEqual(result.equity_curve[3]['equity'], result.equity_curve[2]['equity'])
+        self.assertLess(result.maximum_drawdown, .001)
+
+    def test_suspended_quote_cannot_execute_buy(self):
+        selector = FixtureSelector([10, 10])
+        selector.by_date[selector.calendar[1]]['AAA'].suspended = True
+        result = run_capital_backtest(selector, selector.calendar[0])
+        self.assertEqual(result.trades, [])
 
     def test_rebalance_clearance(self):
         selector = FixtureSelector([10, 10, 10], rebalance=2)

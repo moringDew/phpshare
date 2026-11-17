@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>纯股票策略重建：20% 年化目标验证</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0;padding-bottom:6px}.table-hint{font-size:13px;color:#69788c;margin:12px 0 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{width:max-content;min-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>纯股票策略重建：20% 年化目标验证 · 目录</strong><a href="#section-1">结论</a><a href="#section-2">如何重做</a><a href="#section-3">首选规则结果</a><a href="#section-4">为什么没有采用更高的数字</a><a href="#section-5">数据核对与下一步</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../md/%E7%BA%AF%E8%82%A1%E7%A5%A8%E7%AD%96%E7%95%A5%E9%87%8D%E5%BB%BA_2026-11-17.md">纯股票策略重建_2026-11-17.md</a></div><p class="source"><a href="%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">纯股票策略重建：20% 年化目标验证</h1>
+<blockquote>研究日期：2026-11-17。回测截至 2026-11-13。所有表格均为模拟结果。</blockquote>
+<h2 id="section-1">结论</h2>
+<p>现有数据未验证出可以稳定达到扣费后 <strong>20% 年化</strong> 的策略。2023–2024 年筛选出的首选方案，是每 5 个交易日更新一次的 15 只低波动股票组合。训练段两个调仓起点都超过 20%；规则冻结后，2025–2026 年连续验证的五个起点只有 <strong>4.23%–9.54%</strong>，最大回撤 <strong>8.50%–10.93%</strong>。换到更大的股票池，同期年化进一步降到 <strong>−8.70%–2.73%</strong>。</p>
+<p>这套低波动规则可作研究对照。突破规则在部分起点超过 20%，但收益、回撤和换股票池后的表现都不支持采用。当前没有方案达到切换条件。</p>
+<h2 id="section-2">如何重做</h2>
+<ul>
+<li><p>输入只有沪深主板和创业板股票日线。从股票日线构造流动性、收益和波动等指标；不读旧策略配置、模拟交易、ETF 或真实持仓。</p></li>
+<li><p>比较五类规则：趋势中回调、短期反转、接近高点的突破、低波动、混合打分。每类测试 5 / 10 / 20 日调仓、8 / 15 只，以及是否根据股票池等权走势降低仓位，共 60 套规则。无杠杆，正常股票目标仓位 85%；开启市场趋势过滤的方案在弱市将目标仓位降至 35%。</p></li>
+<li><p>仅用 2023–2024 年选规则。以两个起点中较差的「年化收益减 0.75 倍最大回撤」排名。冻结每类第一名，2025 年起不再调参；首选策略另外遍历 5 个调仓起点，单边费用从 0.20% 加压至 0.40%。</p></li>
+<li><p>10 万元起始、按 100 股整手，信号和目标股数用当日收盘数据，次个交易日收盘模拟成交。无有效行情或触及按日变动估算的涨跌停时阻止交易；无法卖出的仓位继续估值，并计入买入仓位限制。空闲资金收益按零计。</p></li>
+</ul>
+<p>首选规则：在近 20 日平均估算成交额至少 3,000 万元、股价至少 3 元且历史覆盖足够的股票中，按 <strong>63 日低波动分位 70% + 剔除最近 5 日的近季度相对强弱分位 30%</strong> 排名，取前 15 只。每 5 个交易日更新，股票目标仓位 85%，不加择时过滤，也不使用旧策略的个股止损参数。按整手及资金约束下单，实际仓位可以低于目标。</p>
+<h2 id="section-3">首选规则结果</h2>
+<p>验证窗和分年对照均从空仓开始。范围来自同一规则的不同调仓起点，下列收益均按 252 个交易日折算。最大回撤范围与 0.20% 成本使用同一组运行。</p>
+<div class="table-wrap"><table><thead><tr>
+<th>窗口</th>
+<th>股票数据</th>
+<th>年化，单边 0.20%</th>
+<th>最大回撤</th>
+<th>年化，单边 0.40%</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">2023–2024 筛选（两个起点）</td><td style="text-align:left">同花顺 800 只</td><td style="text-align:right">20.01%–20.97%</td><td style="text-align:right">11.18%–14.50%</td><td style="text-align:right">未参与筛选</td></tr>
+<tr><td style="text-align:left">2025</td><td style="text-align:left">同花顺 800 只</td><td style="text-align:right">2.97%–15.84%</td><td style="text-align:right">4.33%–5.48%</td><td style="text-align:right">−2.30%–10.29%</td></tr>
+<tr><td style="text-align:left">2026-01-05 至 11-13</td><td style="text-align:left">同花顺 800 只</td><td style="text-align:right">2.44%–9.57%</td><td style="text-align:right">7.71%–9.00%</td><td style="text-align:right">−1.90%–5.39%</td></tr>
+<tr><td style="text-align:left">2025–2026-11-13 连续验证</td><td style="text-align:left">同花顺 800 只</td><td style="text-align:right"><strong>4.23%–9.54%</strong></td><td style="text-align:right"><strong>8.50%–10.93%</strong></td><td style="text-align:right"><strong>−0.88%–4.42%</strong></td></tr>
+<tr><td style="text-align:left">2026-01-26 至 11-13 同期对照</td><td style="text-align:left">同花顺 800 只</td><td style="text-align:right">4.52%–13.68%</td><td style="text-align:right">7.64%–9.08%</td><td style="text-align:right">0.81%–9.44%</td></tr>
+<tr><td style="text-align:left">2026-01-26 至 11-13 同期对照</td><td style="text-align:left">东方财富 4,420 只</td><td style="text-align:right"><strong>−8.70%–2.73%</strong></td><td style="text-align:right">9.05%–13.08%</td><td style="text-align:right"><strong>−13.88%–−2.54%</strong></td></tr>
+</tbody></table></div>
+<p>连续验证的首日起跑累计收益 <strong>+17.72%</strong>，约 887 笔成交；同一股票池的日度等权行情参考为 <strong>+77.01%</strong>（无成本，非可直接成交的策略）。2024 年首选规则分年年化为 26.73%–35.35%，而 2023 年仅 2.72%–7.06%，说明筛选段的 20% 也依赖阶段行情。</p>
+<h2 id="section-4">为什么没有采用更高的数字</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>冻结规则</th>
+<th>2025–2026 连续验证年化，两个起点</th>
+<th>同期大股票池复验年化，两个起点</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">趋势中回调</td><td style="text-align:right">4.20% / 18.17%</td><td style="text-align:right">−7.52% / −12.14%</td></tr>
+<tr><td style="text-align:left">短期反转</td><td style="text-align:right">−1.20% / 22.68%</td><td style="text-align:right">2.53% / −9.69%</td></tr>
+<tr><td style="text-align:left">接近高点突破</td><td style="text-align:right">−4.17% / 35.18%</td><td style="text-align:right">−29.01% / −12.51%</td></tr>
+<tr><td style="text-align:left">低波动首选规则</td><td style="text-align:right">9.54% / 4.23%</td><td style="text-align:right">1.75% / 1.76%</td></tr>
+<tr><td style="text-align:left">混合打分</td><td style="text-align:right">约 0.00% / 22.75%</td><td style="text-align:right">−3.49% / −15.34%</td></tr>
+</tbody></table></div>
+<p>右列为 2026-01-26 至 11-13，大股票池数据的历史覆盖较短。突破方案达 35.18% 的那次，最大回撤为 <strong>40.25%</strong>；另一个起点甚至亏损。不同起点的差异本身就足以否决把最高值当作策略预期。国内股市的动量和反转结果也对样本时段和信号构造敏感，参见<a href="https://www.sciencedirect.com/science/article/pii/S0275531918302046">中国股票动量的实证研究</a>。</p>
+<h2 id="section-5">数据核对与下一步</h2>
+<p>同花顺数据覆盖 2021-12-01 至 2026-11-13，但 800 只是回看时选中的名单，可能偏向后来仍在交易且活跃的股票。东方财富文件有 4,420 只，历史从 2025-07-10 开始，也不是完整的逐日历史证券全集。两套文件在同期重叠的 798 只股票有 151,979 条可比收益记录，日收益绝对差的第 99 百分位仅 <strong>0.0045 个百分点</strong>。结果指向股票池构成敏感；重叠核对不能证明非重叠股票的数据也同样可靠。</p>
+<p>前复权价格、估算成交额及近似涨跌停规则用于研究。缺少历史 ST、退市、原始成交价、实际佣金和可成交量时，不宜把回测当作可复制收益。下一步优先补齐含退市证券和历史状态的长历史股票数据，再用滚动训练、逐段验证和统一的成本压力条件复验 20% 目标。对于现有数据，继续挑调仓日比补齐数据更容易得到漂亮但不稳的数字。</p>
+<p>复跑：在项目根目录执行 <code>python scripts/research_stock_reset.py</code>，需要 NumPy、pandas；完整结果写入 <code>output/stock_reset.json</code>。研究脚本独立运行，线上信号与真实持仓未变更。</p></main></div></body></html>
