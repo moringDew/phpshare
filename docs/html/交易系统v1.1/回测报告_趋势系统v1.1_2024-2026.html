@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>趋势跟随系统 v1.1 回测报告（最终修正版）</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0;padding-bottom:6px}.table-hint{font-size:13px;color:#69788c;margin:12px 0 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{width:max-content;min-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>趋势跟随系统 v1.1 回测报告（最终修正版） · 目录</strong><a href="#section-1">一、总体结果</a><a href="#section-2">二、年度收益</a><a href="#section-3">三、交易统计</a><a href="#section-4">四、本次修正的 7 处问题</a><a href="#section-5">五、审计结果</a><a href="#section-6">六、必须说明的偏差</a><a href="#section-11">七、结论</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../../md/%E4%BA%A4%E6%98%93%E7%B3%BB%E7%BB%9Fv1.1/%E5%9B%9E%E6%B5%8B%E6%8A%A5%E5%91%8A_%E8%B6%8B%E5%8A%BF%E7%B3%BB%E7%BB%9Fv1.1_2024-2026.md">回测报告_趋势系统v1.1_2024-2026.md</a></div><p class="source"><a href="../%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">趋势跟随系统 v1.1 回测报告（最终修正版）</h1>
+<p><strong>回测区间</strong>：2024-02-28 ~ 2026-11-17（660 个交易日，约 2.6 年） <strong>标的池</strong>：当前总市值 ≥ 150 亿的 A 股，1,096 只（已冻结名单，保证可复现） <strong>规则版本</strong>：<code>交易规则_趋势跟随系统_v1.1_2026-11-17.md</code> <strong>数据来源</strong>：东方财富日线（前复权）</p>
+<p>---</p>
+<h2 id="section-1">一、总体结果</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>指标</th>
+<th>策略</th>
+<th>沪深300</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">总收益</td><td style="text-align:left"><strong>+86.71%</strong></td><td style="text-align:left">+15.25%</td></tr>
+<tr><td style="text-align:left">年化收益</td><td style="text-align:left"><strong>+26.68%</strong></td><td style="text-align:left">+5.52%</td></tr>
+<tr><td style="text-align:left">最大回撤</td><td style="text-align:left"><strong>-7.84%</strong></td><td style="text-align:left">—</td></tr>
+<tr><td style="text-align:left">收益/回撤</td><td style="text-align:left"><strong>3.40</strong></td><td style="text-align:left">—</td></tr>
+<tr><td style="text-align:left">平均仓位</td><td style="text-align:left">29.4%</td><td style="text-align:left">100%</td></tr>
+<tr><td style="text-align:left">期末净值</td><td style="text-align:left">1.8671</td><td style="text-align:left">1.1525</td></tr>
+</tbody></table></div>
+<h2 id="section-2">二、年度收益</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>年份</th>
+<th>策略</th>
+<th>说明</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">2024（2/28–12/31）</td><td style="text-align:left"><strong>+17.07%</strong></td><td style="text-align:left">约 10 个月</td></tr>
+<tr><td style="text-align:left">2025 全年</td><td style="text-align:left"><strong>+11.95%</strong></td><td style="text-align:left"></td></tr>
+<tr><td style="text-align:left">2026（1/1–11/17）</td><td style="text-align:left"><strong>+42.46%</strong></td><td style="text-align:left">约 10.5 个月</td></tr>
+</tbody></table></div>
+<p><strong>注：2026 年的收益全部来自 1–7 月。</strong> 最后一笔买入是 2026-07-02，最后一笔卖出是 2026-07-14。此后沪深300 跌破 MA60 且 MA60 拐头向下，市场状态持续为&quot;空仓&quot;；8–11 月没有任何交易日处于&quot;进攻&quot;状态，系统一直持有现金 1,867,133 元、仓位 0%。这是市场状态过滤在起作用，不是数据缺失——资金曲线完整覆盖 660 个交易日直到 2026-11-17。</p>
+<h2 id="section-3">三、交易统计</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>指标</th>
+<th>数值</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">交易笔数</td><td style="text-align:left">145</td></tr>
+<tr><td style="text-align:left">胜率</td><td style="text-align:left"><strong>41.4%</strong></td></tr>
+<tr><td style="text-align:left">平均每笔</td><td style="text-align:left">+5.49%</td></tr>
+<tr><td style="text-align:left">平均盈利</td><td style="text-align:left">+20.59%</td></tr>
+<tr><td style="text-align:left">平均亏损</td><td style="text-align:left">-5.17%</td></tr>
+<tr><td style="text-align:left">盈亏比</td><td style="text-align:left"><strong>3.98</strong></td></tr>
+<tr><td style="text-align:left">利润因子</td><td style="text-align:left">2.81</td></tr>
+<tr><td style="text-align:left">平均持有</td><td style="text-align:left">14 天</td></tr>
+<tr><td style="text-align:left">最大单笔盈利</td><td style="text-align:left">+94.2%</td></tr>
+<tr><td style="text-align:left">最大单笔亏损</td><td style="text-align:left">-15.2%</td></tr>
+</tbody></table></div>
+<p><strong>卖出原因分布</strong></p>
+<div class="table-wrap"><table><thead><tr>
+<th>原因</th>
+<th>笔数</th>
+<th>胜率</th>
+<th>平均收益</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">跌破 MA20 三日</td><td style="text-align:left">75</td><td style="text-align:left">18.7%</td><td style="text-align:left">-3.32%</td></tr>
+<tr><td style="text-align:left">移动止损（2.5×ATR）</td><td style="text-align:left">41</td><td style="text-align:left">87.8%</td><td style="text-align:left"><strong>+26.89%</strong></td></tr>
+<tr><td style="text-align:left">市场降仓</td><td style="text-align:left">13</td><td style="text-align:left">46.2%</td><td style="text-align:left">+2.09%</td></tr>
+<tr><td style="text-align:left">跌破 MA60</td><td style="text-align:left">10</td><td style="text-align:left">0.0%</td><td style="text-align:left">-8.67%</td></tr>
+<tr><td style="text-align:left">时间止损</td><td style="text-align:left">6</td><td style="text-align:left">66.7%</td><td style="text-align:left">+0.23%</td></tr>
+</tbody></table></div>
+<p><strong>买入信号分布</strong></p>
+<div class="table-wrap"><table><thead><tr>
+<th>信号</th>
+<th>笔数</th>
+<th>胜率</th>
+<th>平均收益</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">缩量回踩</td><td style="text-align:left">142</td><td style="text-align:left">41.5%</td><td style="text-align:left">+5.65%</td></tr>
+<tr><td style="text-align:left">放量突破</td><td style="text-align:left">3</td><td style="text-align:left">33.3%</td><td style="text-align:left">-2.09%</td></tr>
+</tbody></table></div>
+<p>利润全部来自&quot;移动止损&quot;离场的 41 笔（平均 +26.89%）；&quot;跌破 MA20 三日&quot;的 75 笔是必须交的保险费（平均 -3.32%）；&quot;跌破 MA60&quot;的 10 笔是主要亏损来源（平均 -8.67%）。</p>
+<p>---</p>
+<h2 id="section-4">四、本次修正的 7 处问题</h2>
+<ol>
+<li><p>&quot;MA60 向上&quot;切片错误（4 天数据除以 60，条件恒为真）。</p></li>
+<li><p>指数价格取成开盘价（应为收盘价）。</p></li>
+<li><p>ATR 周期算成 15 天（应为 14 天）。</p></li>
+<li><p>入场 ATR 取到执行日收盘（未来数据）。</p></li>
+<li><p>仓位未按 1% 风险规则执行，且存在&quot;股数当金额&quot;的双重除法。</p></li>
+<li><p>缺少组合回撤熔断（-10% 减半、-15% 清仓）。</p></li>
+<li><p>金额四舍五入到元，导致现金流对不上。</p></li>
+</ol>
+<p>另新增开仓日&quot;沪深300 &gt; MA20&quot;过滤；标的池冻结为固定名单，避免每次重跑因市值变动导致结果漂移。</p>
+<p>---</p>
+<h2 id="section-5">五、审计结果</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>检查项</th>
+<th>结果</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">入场规则违规</td><td style="text-align:left"><strong>0 笔</strong></td></tr>
+<tr><td style="text-align:left">单笔风险 &gt; 1.05%</td><td style="text-align:left"><strong>0 笔</strong></td></tr>
+<tr><td style="text-align:left">单笔权重 &gt; 13%</td><td style="text-align:left"><strong>0 笔</strong></td></tr>
+<tr><td style="text-align:left">现金流逐笔核对</td><td style="text-align:left"><strong>0 笔偏差</strong></td></tr>
+<tr><td style="text-align:left">买卖配对</td><td style="text-align:left">145 买 / 145 卖 / 145 笔台账</td></tr>
+<tr><td style="text-align:left">最大持仓</td><td style="text-align:left">8 只</td></tr>
+<tr><td style="text-align:left">台账盈亏 vs 曲线期末</td><td style="text-align:left">完全一致</td></tr>
+</tbody></table></div>
+<p>审计脚本：<code>scripts/audit_trend_v11.py</code> 审计报告：<code>output/交易系统v1.1/审计报告_v11.txt</code></p>
+<p>---</p>
+<h2 id="section-6">六、必须说明的偏差</h2>
+<h3 id="section-7">1. 幸存者偏差</h3>
+<p>标的池为&quot;当前市值≥150亿&quot;，天然排除了后来跌出榜单的股票。该池子同期等权上涨 76.3%（年化约 24.0%），而沪深300 仅 +15.25%。策略相对自身池子的年化超额约 2 个百分点，绝对收益不能外推。</p>
+<h3 id="section-8">2. 结果对实现细节高度敏感</h3>
+<p>修正过程中，&quot;开盘价改收盘价&quot;曾让年化从 30.6% 跳到 41.1%，加入风险仓位后又回落到 26.7%。<strong>任何一版的数字都不能单独拿出来用，26.68% 也不例外。</strong></p>
+<h3 id="section-9">3. 样本内优化与单一市场环境</h3>
+<ul>
+<li><p>参数（MA20/60/120、2.5×ATR、回踩 -1%~+6%）是在看过 2026 年行情后确定的。</p></li>
+<li><p>2024–2026 是大市值 + AI 产业链占优的行情。</p></li>
+<li><p>2026 单年 +42.46%，说明结果依赖这段行情。</p></li>
+</ul>
+<h3 id="section-10">4. 未实现的部分</h3>
+<p>回测没有历史 PE、解禁/减持公告、业绩预告数据；实盘执行会比回测更保守。</p>
+<p>---</p>
+<h2 id="section-11">七、结论</h2>
+<ol>
+<li><p><strong>规则结构有效</strong>：41% 胜率 + 3.98 盈亏比 + 严格止损 + 市场状态过滤 + 回撤熔断，是能长期存活的结构。</p></li>
+<li><p><strong>26.68% 不能当作未来预期</strong>：幸存者偏差 + 样本内优化 + 单一市场环境，三者叠加。合理预期仍按 <strong>10%–15%</strong> 规划，好年份争取 20% 以上。</p></li>
+<li><p><strong>-7.84% 是回测回撤</strong>：实盘遇到跳空或风格切换可能更大，按 -20% 做心理准备。</p></li>
+<li><p><strong>先模拟盘 3 个月</strong>，不要因回测数字直接上真金白银。</p></li>
+</ol>
+<p>---</p>
+<blockquote>本报告仅为历史数据回测，不构成投资建议。回测收益不代表未来表现。</blockquote></main></div></body></html>

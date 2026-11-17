@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>交易记录规范</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0;padding-bottom:6px}.table-hint{font-size:13px;color:#69788c;margin:12px 0 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{width:max-content;min-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>交易记录规范 · 目录</strong><a href="#section-1">一、为什么必须记</a><a href="#section-2">二、必填字段说明</a><a href="#section-3">三、买入原因代码（只能填这些）</a><a href="#section-4">四、卖出原因代码（只能填这些）</a><a href="#section-5">五、资金字段计算规则</a><a href="#section-6">六、记录节奏</a><a href="#section-10">七、月度复盘三问</a><a href="#section-11">八、判断系统是否失效的标准</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../../md/%E4%BA%A4%E6%98%93%E7%B3%BB%E7%BB%9Fv1.1/%E4%BA%A4%E6%98%93%E8%AE%B0%E5%BD%95%E8%A7%84%E8%8C%83_2026-11-17.md">交易记录规范_2026-11-17.md</a></div><p class="source"><a href="../%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">交易记录规范</h1>
+<p><strong>配套文件</strong></p>
+<ul>
+<li><p><code>交易记录模板.csv</code>：实盘用的空白台账（Excel 直接打开）</p></li>
+<li><p><code>交易记录_回测_v1.csv</code>：v1.0 规则 2.6 年回测的 236 笔逐笔记录，可当样例参考</p></li>
+</ul>
+<p>---</p>
+<h2 id="section-1">一、为什么必须记</h2>
+<ol>
+<li><p><strong>区分&quot;规则失效&quot;和&quot;执行走样&quot;</strong>：亏钱时只有台账能告诉你，是规则本身不行，还是你没按规则做。</p></li>
+<li><p><strong>量化执行成本</strong>：模拟盘/回测和实盘的差距，就是你的心理成本，必须看得见。</p></li>
+<li><p><strong>防止事后美化记忆</strong>：人会本能地把亏损归因于&quot;意外&quot;，把盈利归因于&quot;水平&quot;。记录是唯一的解药。</p></li>
+<li><p><strong>月度复盘的数据来源</strong>：没有记录，复盘全是感觉。</p></li>
+</ol>
+<p>---</p>
+<h2 id="section-2">二、必填字段说明</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>字段</th>
+<th>填什么</th>
+<th>示例</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">序号</td><td style="text-align:left">顺序编号</td><td style="text-align:left">1</td></tr>
+<tr><td style="text-align:left">代码 / 名称</td><td style="text-align:left">股票代码与简称</td><td style="text-align:left">000000 / 示例股</td></tr>
+<tr><td style="text-align:left"><strong>买入时间</strong></td><td style="text-align:left">实际成交日期+时间，精确到分钟</td><td style="text-align:left">2026-01-05 09:35</td></tr>
+<tr><td style="text-align:left">买入价</td><td style="text-align:left">实际成交均价（含滑点）</td><td style="text-align:left">20.00</td></tr>
+<tr><td style="text-align:left"><strong>买入原因</strong></td><td style="text-align:left">只能填下方代码表中的一项</td><td style="text-align:left">缩量回踩</td></tr>
+<tr><td style="text-align:left">信号明细</td><td style="text-align:left">距 MA20、量比、相对强度等关键数字</td><td style="text-align:left">距MA20 +2.1%，量比0.75</td></tr>
+<tr><td style="text-align:left">市场状态</td><td style="text-align:left">进攻 / 防守 / 空仓</td><td style="text-align:left">进攻</td></tr>
+<tr><td style="text-align:left">ATR</td><td style="text-align:left">买入时的 ATR14</td><td style="text-align:left">0.80</td></tr>
+<tr><td style="text-align:left">止损价</td><td style="text-align:left">买入时按规则算出的止损位</td><td style="text-align:left">18.40</td></tr>
+<tr><td style="text-align:left">仓位% / 数量</td><td style="text-align:left">占总资金比例与实际股数</td><td style="text-align:left">10% / 5000</td></tr>
+<tr><td style="text-align:left"><strong>买入金额</strong></td><td style="text-align:left">买入成交金额 + 费用</td><td style="text-align:left">100100</td></tr>
+<tr><td style="text-align:left"><strong>买入后剩余现金</strong></td><td style="text-align:left">买入成交后的现金余额</td><td style="text-align:left">899900</td></tr>
+<tr><td style="text-align:left"><strong>买入后总资产</strong></td><td style="text-align:left">现金 + 全部持仓市值</td><td style="text-align:left">999900</td></tr>
+<tr><td style="text-align:left"><strong>卖出时间</strong> / 卖出价</td><td style="text-align:left">实际卖出日期+时间 / 均价</td><td style="text-align:left">2026-01-20 14:20 / 22.50</td></tr>
+<tr><td style="text-align:left"><strong>卖出原因</strong></td><td style="text-align:left">只能填下方代码表中的一项</td><td style="text-align:left">移动止损</td></tr>
+<tr><td style="text-align:left">持有天数</td><td style="text-align:left">自然日或交易日，全表统一</td><td style="text-align:left">15</td></tr>
+<tr><td style="text-align:left"><strong>卖出金额</strong></td><td style="text-align:left">卖出成交金额 − 费用</td><td style="text-align:left">112388</td></tr>
+<tr><td style="text-align:left"><strong>卖出后剩余现金</strong></td><td style="text-align:left">卖出成交后的现金余额</td><td style="text-align:left">1012288</td></tr>
+<tr><td style="text-align:left"><strong>卖出后总资产</strong></td><td style="text-align:left">现金 + 剩余持仓市值</td><td style="text-align:left">1012288</td></tr>
+<tr><td style="text-align:left"><strong>盈亏金额</strong></td><td style="text-align:left">本笔盈亏（卖出金额 − 买入金额）</td><td style="text-align:left">+12288</td></tr>
+<tr><td style="text-align:left"><strong>累计盈亏</strong></td><td style="text-align:left">上一笔累计盈亏 + 本笔盈亏</td><td style="text-align:left">+12288</td></tr>
+<tr><td style="text-align:left">收益率%</td><td style="text-align:left">盈亏金额 ÷ 买入金额</td><td style="text-align:left">12.28</td></tr>
+<tr><td style="text-align:left"><strong>状态</strong></td><td style="text-align:left">已平仓 / 持仓中</td><td style="text-align:left">已平仓</td></tr>
+<tr><td style="text-align:left"><strong>是否违规</strong></td><td style="text-align:left">是 / 否</td><td style="text-align:left">否</td></tr>
+<tr><td style="text-align:left">复盘备注</td><td style="text-align:left">一句话写清当时想法</td><td style="text-align:left">按规则执行，无违规</td></tr>
+</tbody></table></div>
+<p>---</p>
+<h2 id="section-3">三、买入原因代码（只能填这些）</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>代码</th>
+<th>含义</th>
+<th>触发条件</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">缩量回踩</td><td style="text-align:left">强势股洗盘结束</td><td style="text-align:left">量 ≤ 5 日均量 × 0.8，收盘站回 MA20</td></tr>
+<tr><td style="text-align:left">放量突破</td><td style="text-align:left">资金重新进攻</td><td style="text-align:left">收盘创 20 日新高，量 ≥ 20 日均量 × 1.5</td></tr>
+<tr><td style="text-align:left">违反规则</td><td style="text-align:left">没按系统做的交易</td><td style="text-align:left"><strong>备注里必须写清违反了哪一条</strong></td></tr>
+</tbody></table></div>
+<h2 id="section-4">四、卖出原因代码（只能填这些）</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>代码</th>
+<th>含义</th>
+<th>触发条件</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">跌破MA60</td><td style="text-align:left">趋势终结</td><td style="text-align:left">收盘价 &lt; MA60</td></tr>
+<tr><td style="text-align:left">移动止损</td><td style="text-align:left">止盈离场</td><td style="text-align:left">从持仓最高点回撤 &gt; 2.5×ATR</td></tr>
+<tr><td style="text-align:left">跌破MA20三日</td><td style="text-align:left">趋势走弱</td><td style="text-align:left">收盘价连续 3 日 &lt; MA20</td></tr>
+<tr><td style="text-align:left">时间止损</td><td style="text-align:left">换股</td><td style="text-align:left">持有 20 天、涨幅 &lt; 5% 且跌破 MA20</td></tr>
+<tr><td style="text-align:left">市场降仓</td><td style="text-align:left">大盘转弱</td><td style="text-align:left">市场状态转防守/空仓</td></tr>
+<tr><td style="text-align:left">回撤减半</td><td style="text-align:left">组合风控</td><td style="text-align:left">组合回撤达 -10%，减半并暂停 5 日</td></tr>
+<tr><td style="text-align:left">回撤清仓</td><td style="text-align:left">组合风控</td><td style="text-align:left">组合回撤达 -15%，清仓并暂停 10 日</td></tr>
+<tr><td style="text-align:left">事件卖出</td><td style="text-align:left">解禁、减持、业绩暴雷</td><td style="text-align:left">公告触发</td></tr>
+<tr><td style="text-align:left">违反规则</td><td style="text-align:left">没按规则卖出（恐慌、贪心）</td><td style="text-align:left"><strong>备注写清原因</strong></td></tr>
+</tbody></table></div>
+<p>---</p>
+<h2 id="section-5">五、资金字段计算规则</h2>
+<p>每笔交易必须能回答三个问题：<strong>这笔投了多少钱、账户还剩多少钱、这笔赚亏多少。</strong></p>
+<div class="table-wrap"><table><thead><tr>
+<th>字段</th>
+<th>公式</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">买入金额</td><td style="text-align:left">买入价 × 数量 × (1 + 交易费率)</td></tr>
+<tr><td style="text-align:left">买入后剩余现金</td><td style="text-align:left">上一笔卖出后剩余现金 − 买入金额</td></tr>
+<tr><td style="text-align:left">买入后总资产</td><td style="text-align:left">买入后剩余现金 + 全部持仓市值（按收盘价）</td></tr>
+<tr><td style="text-align:left">卖出金额</td><td style="text-align:left">卖出价 × 数量 × (1 − 交易费率)</td></tr>
+<tr><td style="text-align:left">卖出后剩余现金</td><td style="text-align:left">买入后剩余现金 + 卖出金额</td></tr>
+<tr><td style="text-align:left">卖出后总资产</td><td style="text-align:left">卖出后剩余现金 + 剩余持仓市值</td></tr>
+<tr><td style="text-align:left">变动金额</td><td style="text-align:left">卖出金额 − 买入金额</td></tr>
+<tr><td style="text-align:left">累计变动</td><td style="text-align:left">上一笔累计变动 + 本笔变动</td></tr>
+<tr><td style="text-align:left">收益率%</td><td style="text-align:left">变动金额 ÷ 买入金额 × 100%</td></tr>
+</tbody></table></div>
+<p><strong>注意事项</strong></p>
+<ol>
+<li><p>交易费率按单边 0.1% 估算（佣金 + 印花税 + 滑点），买卖两边都算。</p></li>
+<li><p>&quot;总资产&quot;按当日收盘价计算，不是按成本价。</p></li>
+<li><p>持仓未卖出时，变动金额按浮动盈亏填；卖出后改为已实现金额。</p></li>
+<li><p>每笔的&quot;买入后剩余现金&quot;必须等于上一笔的&quot;卖出后剩余现金&quot;减去本笔买入金额，对不上就是漏记了交易。</p></li>
+<li><p>同一天有多笔买入时，按实际成交顺序记录，剩余现金是滚动计算的。</p></li>
+</ol>
+<p><strong>对账方法</strong></p>
+<ul>
+<li><p>每周末：券商 App 的&quot;可用资金&quot;应等于最后一笔的&quot;卖出后剩余现金&quot;，不一致就找漏记。</p></li>
+<li><p>每月底：券商 App 的&quot;总资产&quot;应等于&quot;剩余现金 + 持仓市值&quot;，差异应小于 0.5%。</p></li>
+</ul>
+<p><strong>配套的资金曲线</strong></p>
+<p>回测导出四张表，分工不同：</p>
+<ul>
+<li><p><code>资金曲线_回测_v1.csv</code>：逐日现金、持仓市值、总资产、当日变动、累计收益率、仓位、持仓只数、当日买入、当日卖出、持仓明细</p></li>
+<li><p><code>每日持仓_回测_v1.csv</code>：一行一只的持仓快照（成本价、收盘价、市值、浮盈、买入原因、持有天数）</p></li>
+<li><p><code>每日交易流水_回测_v1.csv</code>：按日期排列的全部买卖（操作、成交价、成交金额、成交后现金、市场状态、原因）</p></li>
+<li><p><code>交易记录_回测_v1.csv</code>：一笔一行的完整买卖闭环（买卖原因、资金流水、变动金额）</p></li>
+</ul>
+<p>实盘建议：<strong>交易流水每天记，持仓快照每天记，逐笔台账在卖出后补齐。</strong></p>
+<p>---</p>
+<h2 id="section-6">六、记录节奏</h2>
+<h3 id="section-7">每日收盘后（15:30–16:00，5 分钟）</h3>
+<ul>
+<li><p><input type="checkbox" disabled> 更新持仓的最高价、ATR、MA20、MA60</p></li>
+<li><p><input type="checkbox" disabled> 检查是否触发卖出条件</p></li>
+<li><p><input type="checkbox" disabled> 如果今天有买卖，立刻填写台账（不要拖到晚上）</p></li>
+<li><p><input type="checkbox" disabled> 没有交易也要记录组合净值</p></li>
+</ul>
+<h3 id="section-8">每周五收盘后（15:30–17:00，15 分钟）</h3>
+<ul>
+<li><p><input type="checkbox" disabled> 更新市场状态（沪深300 vs MA60）</p></li>
+<li><p><input type="checkbox" disabled> 检查下周解禁、减持公告</p></li>
+<li><p><input type="checkbox" disabled> 生成下周候选名单</p></li>
+<li><p><input type="checkbox" disabled> 检查本周是否有违规交易</p></li>
+</ul>
+<h3 id="section-9">每月末（30 分钟）</h3>
+<p>统计并填写月度汇总：</p>
+<div class="table-wrap"><table><thead><tr>
+<th>指标</th>
+<th>本月</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">交易笔数</td><td style="text-align:left"></td></tr>
+<tr><td style="text-align:left">胜率</td><td style="text-align:left"></td></tr>
+<tr><td style="text-align:left">平均盈利 / 平均亏损</td><td style="text-align:left"></td></tr>
+<tr><td style="text-align:left">盈亏比</td><td style="text-align:left"></td></tr>
+<tr><td style="text-align:left">最大单笔亏损</td><td style="text-align:left"></td></tr>
+<tr><td style="text-align:left">组合月收益 / 最大回撤</td><td style="text-align:left"></td></tr>
+<tr><td style="text-align:left"><strong>违规次数</strong></td><td style="text-align:left"></td></tr>
+<tr><td style="text-align:left">规则内交易占比</td><td style="text-align:left"></td></tr>
+</tbody></table></div>
+<p>---</p>
+<h2 id="section-10">七、月度复盘三问</h2>
+<ol>
+<li><p><strong>这个月每一笔交易，是否都在规则内？</strong>（违规次数是最重要的指标，比盈亏更重要）</p></li>
+<li><p><strong>如果违规了，当时在想什么？</strong>（写下情绪触发点：怕踏空、怕回撤、听消息、手痒）</p></li>
+<li><p><strong>规则要不要改？</strong>（一年最多改一次，且必须有 3 个月以上的数据支撑）</p></li>
+</ol>
+<p>---</p>
+<h2 id="section-11">八、判断系统是否失效的标准</h2>
+<p>连续 3 个月出现以下任一情况，才考虑暂停系统：</p>
+<ul>
+<li><p>违规交易占比 &gt; 20%（说明是执行力问题，先修执行，不是修规则）</p></li>
+<li><p>规则内交易连续 20 笔亏损，且回撤超过 20%</p></li>
+<li><p>实际胜率/盈亏比与回测偏离超过 50%</p></li>
+</ul>
+<p><strong>单月亏损不是暂停系统的理由。</strong> 回测里 39% 的胜率意味着，连续亏 5–6 笔是正常现象。</p>
+<p>---</p>
+<blockquote>台账的第一价值不是算收益，而是让你在每一次下单前，被迫回答&quot;这一笔符合哪条规则&quot;。</blockquote></main></div></body></html>

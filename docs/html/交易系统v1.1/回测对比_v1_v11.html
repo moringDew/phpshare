@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>趋势跟随系统：v1.0 → v1.1 修正对比</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0;padding-bottom:6px}.table-hint{font-size:13px;color:#69788c;margin:12px 0 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{width:max-content;min-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>趋势跟随系统：v1.0 → v1.1 修正对比 · 目录</strong><a href="#section-1">一、修了哪 7 处</a><a href="#section-2">二、修正后对比</a><a href="#section-3">三、修正过程中最重要的三个发现</a><a href="#section-7">四、被剔除的是哪些交易</a><a href="#section-8">五、审计结果</a><a href="#section-9">六、无效的过滤条件（实测）</a><a href="#section-10">七、必须说明的偏差</a><a href="#section-11">八、文件对应</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../../md/%E4%BA%A4%E6%98%93%E7%B3%BB%E7%BB%9Fv1.1/%E5%9B%9E%E6%B5%8B%E5%AF%B9%E6%AF%94_v1_v11.md">回测对比_v1_v11.md</a></div><p class="source"><a href="../%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">趋势跟随系统：v1.0 → v1.1 修正对比</h1>
+<p><strong>回测区间</strong>：2024-02-28 ~ 2026-11-17（660 个交易日，约 2.6 年） <strong>原则</strong>：只修 bug、只增加有经济逻辑的过滤，不做参数微调</p>
+<p>---</p>
+<h2 id="section-1">一、修了哪 7 处</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>#</th>
+<th>问题</th>
+<th>原代码</th>
+<th>修正</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">1</td><td style="text-align:left">&quot;MA60 向上&quot;切片错误</td><td style="text-align:left"><code>sum(hs_close[j-64:j-60])/60</code>（4 天数据）</td><td style="text-align:left"><code>sum(hs_close[j-64:j-4])/60</code></td></tr>
+<tr><td style="text-align:left">2</td><td style="text-align:left">指数价格取错列</td><td style="text-align:left"><code>x[1]</code>（开盘价）</td><td style="text-align:left"><code>x[2]</code>（收盘价）</td></tr>
+<tr><td style="text-align:left">3</td><td style="text-align:left">ATR 周期错误</td><td style="text-align:left">15 个 TR 除以 15</td><td style="text-align:left">14 个 TR 除以 14</td></tr>
+<tr><td style="text-align:left">4</td><td style="text-align:left">入场 ATR 用了未来数据</td><td style="text-align:left"><code>atr[i]</code>（执行日收盘）</td><td style="text-align:left"><code>atr[i-1]</code>（信号日）</td></tr>
+<tr><td style="text-align:left">5</td><td style="text-align:left">仓位未按 1% 风险规则</td><td style="text-align:left">固定 12.5%，且&quot;股数当金额&quot;再除一次价格</td><td style="text-align:left">按 1% 风险 ÷ 2×ATR，受 12.5% 权重与现金约束</td></tr>
+<tr><td style="text-align:left">6</td><td style="text-align:left">缺少组合回撤熔断</td><td style="text-align:left">无</td><td style="text-align:left">-10% 减半暂停 5 日；-15% 清仓暂停 10 日；期满重置基准</td></tr>
+<tr><td style="text-align:left">7</td><td style="text-align:left">金额四舍五入到元</td><td style="text-align:left">现金流对不上 1–2 元</td><td style="text-align:left">按分结算，逐笔对齐</td></tr>
+</tbody></table></div>
+<p>另外新增了开仓日&quot;沪深300 &gt; MA20&quot;过滤，并把标的池冻结为固定名单，保证重跑结果一致。</p>
+<p>---</p>
+<h2 id="section-2">二、修正后对比</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>指标</th>
+<th>v1.0 旧版（含全部 bug）</th>
+<th>v1.0b 修 bug、无 MA20 过滤</th>
+<th><strong>v1.1 修 bug + MA20</strong></th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">年化收益</td><td style="text-align:left">+31.77%</td><td style="text-align:left">+25.44%</td><td style="text-align:left"><strong>+26.68%</strong></td></tr>
+<tr><td style="text-align:left">最大回撤</td><td style="text-align:left">-27.48%</td><td style="text-align:left">-13.93%</td><td style="text-align:left"><strong>-7.84%</strong></td></tr>
+<tr><td style="text-align:left">收益/回撤</td><td style="text-align:left">1.16</td><td style="text-align:left">1.83</td><td style="text-align:left"><strong>3.40</strong></td></tr>
+<tr><td style="text-align:left">平均仓位</td><td style="text-align:left">55.7%</td><td style="text-align:left">31.9%</td><td style="text-align:left">29.4%</td></tr>
+<tr><td style="text-align:left">交易笔数</td><td style="text-align:left">236</td><td style="text-align:left">186</td><td style="text-align:left"><strong>145</strong></td></tr>
+<tr><td style="text-align:left">胜率</td><td style="text-align:left">39.0%</td><td style="text-align:left">39.8%</td><td style="text-align:left"><strong>41.4%</strong></td></tr>
+<tr><td style="text-align:left">平均每笔</td><td style="text-align:left">+2.96%</td><td style="text-align:left">+4.35%</td><td style="text-align:left"><strong>+5.49%</strong></td></tr>
+<tr><td style="text-align:left">盈亏比</td><td style="text-align:left">2.79</td><td style="text-align:left">3.59</td><td style="text-align:left"><strong>3.98</strong></td></tr>
+<tr><td style="text-align:left">利润因子</td><td style="text-align:left">1.78</td><td style="text-align:left">2.37</td><td style="text-align:left"><strong>2.81</strong></td></tr>
+<tr><td style="text-align:left">最大单笔亏损</td><td style="text-align:left">-22.1%</td><td style="text-align:left">-16.3%</td><td style="text-align:left"><strong>-15.2%</strong></td></tr>
+<tr><td style="text-align:left">跌破 MA60 离场</td><td style="text-align:left">35 笔</td><td style="text-align:left">11 笔</td><td style="text-align:left"><strong>10 笔</strong></td></tr>
+</tbody></table></div>
+<p><strong>结论</strong>：MA20 过滤用约 1.2 个百分点的年化收益，换来 6.1 个百分点的回撤下降，收益/回撤从 1.83 提升到 3.40。</p>
+<p>---</p>
+<h2 id="section-3">三、修正过程中最重要的三个发现</h2>
+<h3 id="section-4">1. 旧版 31.77% 是虚高的</h3>
+<p>旧版同时存在&quot;指数用开盘价&quot;和&quot;仓位固定 12.5%、无回撤熔断&quot;两个问题。修正后年化回落到 26.68%，但最大回撤从 -27.48% 降到 -7.84%——<strong>风险调整后的质量提升，比收益率更重要</strong>。</p>
+<h3 id="section-5">2. &quot;开盘价→收盘价&quot;一处修复曾让年化从 30.6% 跳到 41.1%</h3>
+<p>这说明策略对实现细节极度敏感。后来加入按 ATR 的风险仓位后，结果又回落到 26.7%。<strong>中间任何一版的数字都不能单独拿出来用。</strong></p>
+<h3 id="section-6">3. 回撤熔断曾出现死锁</h3>
+<p>最初实现&quot;-10% 暂停开新仓&quot;时，如果净值全在现金里，回撤永远无法恢复，系统会永久停止交易（对照版 2026 年收益正好 0.00%）。现已加入&quot;暂停期满以当前净值重置回撤基准&quot;。</p>
+<p>---</p>
+<h2 id="section-7">四、被剔除的是哪些交易</h2>
+<p>增加 MA20 过滤后，交易从 186 笔降到 145 笔，剔除 41 笔。典型被剔除案例：</p>
+<ul>
+<li><p>2026-07-15 的格科微（-19.01%）、上海新阳（-18.38%）、华大九天（-13.97%）、中石科技（-12.24%）</p></li>
+<li><p>2024-12-23 的国盛证券、华测导航、浙江鼎力、雅戈尔（当天指数在 MA20 下方）</p></li>
+</ul>
+<p>修正前，这些交易在回测里是&quot;信号日指数低于 MA20 却仍买入&quot;的违规交易；修正后为 <strong>0 违规</strong>。</p>
+<p>---</p>
+<h2 id="section-8">五、审计结果</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>检查项</th>
+<th>结果</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">入场规则违规</td><td style="text-align:left">0 笔</td></tr>
+<tr><td style="text-align:left">单笔风险 &gt; 1.05%</td><td style="text-align:left">0 笔</td></tr>
+<tr><td style="text-align:left">单笔权重 &gt; 13%</td><td style="text-align:left">0 笔</td></tr>
+<tr><td style="text-align:left">现金流逐笔核对</td><td style="text-align:left">0 笔偏差</td></tr>
+<tr><td style="text-align:left">买卖配对</td><td style="text-align:left">145 买 / 145 卖 / 145 笔台账</td></tr>
+<tr><td style="text-align:left">最大持仓</td><td style="text-align:left">8 只</td></tr>
+<tr><td style="text-align:left">同日重复持仓</td><td style="text-align:left">0 天</td></tr>
+<tr><td style="text-align:left">台账盈亏 vs 曲线期末</td><td style="text-align:left">完全一致</td></tr>
+</tbody></table></div>
+<p>审计脚本：<code>scripts/audit_trend_v11.py</code>，报告：<code>output/交易系统v1.1/审计报告_v11.txt</code>。</p>
+<p>---</p>
+<h2 id="section-9">六、无效的过滤条件（实测）</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>候选条件</th>
+<th>结果</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">ATR% ≤ 6</td><td style="text-align:left">砍掉高波动赢家（寒武纪、宏景科技等）</td></tr>
+<tr><td style="text-align:left">距 MA20 ≤ 4%</td><td style="text-align:left">3%–4% 区间贡献大部分利润，砍掉反而变差</td></tr>
+<tr><td style="text-align:left">60 日涨幅 ≤ 40%</td><td style="text-align:left">40%–60% 区间贡献约 37% 利润</td></tr>
+<tr><td style="text-align:left">相对强度 ≥ 2%</td><td style="text-align:left">几乎无变化</td></tr>
+<tr><td style="text-align:left">股价 ≥ 5 元</td><td style="text-align:left">只影响 8 笔</td></tr>
+</tbody></table></div>
+<p><strong>亏损主要来自跳空/跌停击穿 MA60，靠技术指标过滤不掉，只能靠仓位和止损控制。</strong></p>
+<p>---</p>
+<h2 id="section-10">七、必须说明的偏差</h2>
+<ol>
+<li><p><strong>幸存者偏差</strong>：标的池为&quot;当前市值≥150亿&quot;的 1,096 只股票，池子同期等权上涨 76.3%（年化约 24.0%）。</p></li>
+<li><p><strong>样本内优化</strong>：MA20 过滤、2.5×ATR 等参数是在这段数据上确定的。</p></li>
+<li><p><strong>单一市场环境</strong>：2024–2026 是大市值 + AI 产业链占优的行情。</p></li>
+<li><p><strong>未实现</strong>：历史 PE、解禁/减持、业绩预告数据。</p></li>
+</ol>
+<p><strong>长期仍按 10%–15% 规划，好年份争取 20% 以上。</strong></p>
+<p>---</p>
+<h2 id="section-11">八、文件对应</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>版本</th>
+<th>回测结果</th>
+<th>交易记录</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left"><strong>v1.1 当前版本</strong></td><td style="text-align:left"><code>output/交易系统v1.1/回测_趋势系统v11.txt</code></td><td style="text-align:left"><code>交易记录_回测_v11.csv</code></td></tr>
+</tbody></table></div>
+<p>旧版（v1.0）与对照版（v1.0b）的数据文件已全部清除，仅保留本文中的对比结论。</p>
+<p>规则文档：<code>交易规则_趋势跟随系统_v1.1_2026-11-17.md</code></p>
+<blockquote>回测收益不代表未来表现，长期仍按 10%–15% 规划。</blockquote></main></div></body></html>

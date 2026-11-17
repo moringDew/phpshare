@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>趋势跟随交易系统 v1.1</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0;padding-bottom:6px}.table-hint{font-size:13px;color:#69788c;margin:12px 0 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{width:max-content;min-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>趋势跟随交易系统 v1.1 · 目录</strong><a href="#section-1">一、系统设计原则</a><a href="#section-2">二、市场状态判定（决定总仓位）</a><a href="#section-3">三、买入规则</a><a href="#section-7">四、仓位与风险管理</a><a href="#section-11">五、持有规则</a><a href="#section-12">六、卖出规则</a><a href="#section-16">七、执行清单</a><a href="#section-20">八、收益预期（诚实版）</a><a href="#section-21">九、绝对禁止事项</a><a href="#section-22">十、上线验证流程</a><a href="#section-23">十一、参数表（一年内不得修改）</a><a href="#section-24">十二、回测验证摘要（2024-02-28 ~ 2026-11-17）</a><a href="#section-25">十三、免责声明</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../../md/%E4%BA%A4%E6%98%93%E7%B3%BB%E7%BB%9Fv1.1/%E4%BA%A4%E6%98%93%E8%A7%84%E5%88%99_%E8%B6%8B%E5%8A%BF%E8%B7%9F%E9%9A%8F%E7%B3%BB%E7%BB%9F_v1.1_2026-11-17.md">交易规则_趋势跟随系统_v1.1_2026-11-17.md</a></div><p class="source"><a href="../%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">趋势跟随交易系统 v1.1</h1>
+<p><strong>版本</strong>：v1.1（2026-11-17 修订：修复 MA60 判断、指数价格取开盘价、ATR 周期、入场 ATR 未来数据、仓位计算、回撤熔断、账目精度共 7 处问题；新增开仓日沪深300 &gt; MA20 过滤） <strong>制定日期</strong>：2026-11-17 <strong>适用市场</strong>：A 股（沪深主板、创业板、科创板） <strong>系统类型</strong>：趋势跟随 + 市场状态择时 + 右侧交易 <strong>目标</strong>：长期年化 10%–15%，牛市年份 30%–60%，熊市控制回撤在 20% 以内</p>
+<blockquote>本文件是交易纪律，不是收益承诺。规则的价值在于<strong>执行的一致性</strong>，不在于预测。</blockquote>
+<p>---</p>
+<h2 id="section-1">一、系统设计原则</h2>
+<ol>
+<li><p><strong>先活下来，再谈收益</strong>：任何单笔亏损不超过总资金 1%。</p></li>
+<li><p><strong>只做右侧</strong>：不抄底、不猜底、不接飞刀。</p></li>
+<li><p><strong>市场状态优先于个股信号</strong>：熊市里最好的个股也会跌。</p></li>
+<li><p><strong>规则外不交易</strong>：不在盘中临时改规则，不因为&quot;感觉&quot;加仓。</p></li>
+<li><p><strong>可以空仓</strong>：空仓是系统的一部分，不是失败。</p></li>
+</ol>
+<p>---</p>
+<h2 id="section-2">二、市场状态判定（决定总仓位）</h2>
+<p><strong>基准指数</strong>：沪深 300（000300） <strong>检查频率</strong>：每周五收盘后检查一次，下周执行，盘中不改。</p>
+<div class="table-wrap"><table><thead><tr>
+<th>状态</th>
+<th>判定条件</th>
+<th>总仓位上限</th>
+<th>允许开新仓</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left"><strong>进攻</strong></td><td style="text-align:left">收盘 &gt; MA60，且 MA60 向上（当前 MA60 &gt; 5 个交易日前的 MA60）</td><td style="text-align:left">100%</td><td style="text-align:left">是</td></tr>
+<tr><td style="text-align:left"><strong>防守</strong></td><td style="text-align:left">收盘 &lt; MA60，但 MA60 仍向上</td><td style="text-align:left">30%</td><td style="text-align:left">否</td></tr>
+<tr><td style="text-align:left"><strong>空仓</strong></td><td style="text-align:left">收盘 &lt; MA60，且 MA60 向下</td><td style="text-align:left">0%–10%</td><td style="text-align:left">否</td></tr>
+</tbody></table></div>
+<p><strong>执行要求</strong></p>
+<ul>
+<li><p>状态只在每周五收盘后更新，周一开盘执行。</p></li>
+<li><p><strong>每日开仓前额外检查（v1.1 新增）</strong>：信号当日沪深300收盘价必须高于 MA20，否则即使周度状态为&quot;进攻&quot;也不开新仓。这是对周度状态滞后的补充，用于规避周内快速破位。</p></li>
+<li><p>进攻转防守：一周内把总仓位降到 30% 以下。</p></li>
+<li><p>防守转空仓：清到 10% 以下，或全部清空。</p></li>
+<li><p>空仓转进攻：首日按信号建仓，之后随信号逐步加满（回测按逐日信号执行，不强制分批）。</p></li>
+</ul>
+<p>---</p>
+<h2 id="section-3">三、买入规则</h2>
+<h3 id="section-4">3.1 前置条件（全部满足）</h3>
+<ol>
+<li><p>市场状态为<strong>进攻</strong>。</p></li>
+<li><p>个股 MA20 &gt; MA60 &gt; MA120，且 MA60 向上。</p></li>
+<li><p>收盘价距 MA20 在 <strong>-1% 至 +6%</strong> 之间。</p></li>
+<li><p>60 日涨幅在 <strong>5% 至 60%</strong> 之间。</p></li>
+<li><p>20 日相对强度 &gt; 0（个股 20 日涨幅 − 沪深300 同期涨幅 &gt; 0）。</p></li>
+<li><p>排除项：</p>
+<ul>
+<li><p>ST、*ST、退市风险股</p></li>
+<li><p>上市不足 1 年</p></li>
+<li><p>总市值 &lt; 100 亿</p></li>
+<li><p>20 日均成交额 &lt; 2 亿</p></li>
+<li><p>PE(TTM) ≤ 0 或 &gt; 100</p></li>
+<li><p>未来 30 日内有解禁或已发减持公告</p></li>
+<li><p>近 3 个月有业绩预亏、立案调查、大额商誉减值</p></li>
+</ul></li>
+</ol>
+<h3 id="section-5">3.2 触发信号（二选一）</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>信号</th>
+<th>条件</th>
+<th>含义</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left"><strong>缩量回踩</strong></td><td style="text-align:left">当日成交量 ≤ 5 日均量 × 0.8，且收盘价站回 MA20 上方</td><td style="text-align:left">强势股洗盘结束</td></tr>
+<tr><td style="text-align:left"><strong>放量突破</strong></td><td style="text-align:left">收盘价创 20 日新高，且成交量 ≥ 20 日均量 × 1.5</td><td style="text-align:left">资金重新进攻</td></tr>
+</tbody></table></div>
+<p><strong>两者不可同时要求，出现任一即可。禁止在两者都不满足时买入。</strong></p>
+<h3 id="section-6">3.3 买入执行</h3>
+<ul>
+<li><p>信号在<strong>收盘后</strong>确认，<strong>次日开盘买入</strong>，不盘中追高。</p></li>
+<li><p>若次日开盘高开超过 3%，放弃这笔交易（不追）。</p></li>
+<li><p>同一板块最多同时持有 2 只。</p></li>
+</ul>
+<p>---</p>
+<h2 id="section-7">四、仓位与风险管理</h2>
+<h3 id="section-8">4.1 仓位分配</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>项目</th>
+<th>规则</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">最大持仓数</td><td style="text-align:left">8 只</td></tr>
+<tr><td style="text-align:left">单只权重</td><td style="text-align:left">12.5%（进攻状态）；防守状态合计不超过 30%</td></tr>
+<tr><td style="text-align:left">单笔风险</td><td style="text-align:left">≤ 总资金 1%</td></tr>
+<tr><td style="text-align:left">总仓位</td><td style="text-align:left">由市场状态决定（100% / 30% / 10%）</td></tr>
+<tr><td style="text-align:left">杠杆</td><td style="text-align:left"><strong>禁止</strong>（不融资、不配资、不买杠杆 ETF）</td></tr>
+</tbody></table></div>
+<h3 id="section-9">4.2 单笔仓位计算</h3>
+<pre><code class="language-">股数 = 总资金 × 1% ÷ (2 × ATR14)</code></pre>
+<ul>
+<li><p>例：总资金 20 万，ATR = 2 元 → 可买 2000 ÷ 4 = 500 股。</p></li>
+<li><p>若算出的仓位超过 12.5% 上限，按 12.5% 执行。</p></li>
+<li><p>若算出的股数不足 100 股（1 手），说明该标的波动过大，<strong>放弃这笔交易</strong>。</p></li>
+</ul>
+<h3 id="section-10">4.3 组合风控</h3>
+<ul>
+<li><p>组合回撤达到 <strong>10%</strong>：总仓位减半，暂停开新仓 5 个交易日；期满后以当前净值重置回撤基准。</p></li>
+<li><p>组合回撤达到 <strong>15%</strong>：清仓，暂停 10 个交易日；期满后以当前净值重置回撤基准，再启动。</p></li>
+<li><p>连续 5 笔亏损：暂停交易 1 周，检查是否违反规则。</p></li>
+</ul>
+<p>---</p>
+<h2 id="section-11">五、持有规则</h2>
+<ol>
+<li><p><strong>最短持有 5 个交易日</strong>。期间除&quot;跌破 MA60&quot;外，不因任何原因卖出。</p></li>
+<li><p>每日收盘后更新：</p>
+<ul>
+<li><p>持仓最高价（用于移动止损）</p></li>
+<li><p>是否跌破 MA20 / MA60</p></li>
+</ul></li>
+<li><p><strong>不因单日大涨大跌操作</strong>：单日跌幅 &lt; 8% 且未破 MA20 时，不卖。</p></li>
+<li><p>持有期间不补仓、不摊平成本。</p></li>
+</ol>
+<p>---</p>
+<h2 id="section-12">六、卖出规则</h2>
+<h3 id="section-13">6.1 硬性卖出（任一触发，次日开盘执行）</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>序号</th>
+<th>条件</th>
+<th>动作</th>
+<th>说明</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">1</td><td style="text-align:left">收盘价 &lt; MA60</td><td style="text-align:left">清仓</td><td style="text-align:left">趋势终结，无条件</td></tr>
+<tr><td style="text-align:left">2</td><td style="text-align:left">从持仓期最高点回撤 &gt; 2.5 × ATR</td><td style="text-align:left">清仓</td><td style="text-align:left">移动止盈；最高点按收盘价，ATR 取入场时 ATR14</td></tr>
+<tr><td style="text-align:left">3</td><td style="text-align:left">收盘价 &lt; MA20 连续 3 个交易日</td><td style="text-align:left">清仓</td><td style="text-align:left">趋势走弱</td></tr>
+<tr><td style="text-align:left">4</td><td style="text-align:left">持有满 20 个交易日，涨幅 &lt; 5%，且收盘 &lt; MA20</td><td style="text-align:left">清仓</td><td style="text-align:left">时间止损，换股</td></tr>
+<tr><td style="text-align:left">5</td><td style="text-align:left">解禁前 10 个交易日</td><td style="text-align:left">减半</td><td style="text-align:left">供给冲击</td></tr>
+<tr><td style="text-align:left">6</td><td style="text-align:left">发布减持公告 / 业绩预亏 / 立案调查</td><td style="text-align:left">清仓</td><td style="text-align:left">事件驱动</td></tr>
+<tr><td style="text-align:left">7</td><td style="text-align:left">市场状态转防守</td><td style="text-align:left">组合降至 30%</td><td style="text-align:left">先卖浮亏最大的</td></tr>
+</tbody></table></div>
+<h3 id="section-14">6.2 卖出优先级</h3>
+<ol>
+<li><p>先执行硬性止损（第 1、2 条）</p></li>
+<li><p>再执行事件卖出（第 5、6 条）</p></li>
+<li><p>最后执行仓位调整（第 7 条）</p></li>
+</ol>
+<h3 id="section-15">6.3 禁止的卖出理由</h3>
+<ul>
+<li><p>&quot;赚够了&quot;（没有触发移动止损就不卖）</p></li>
+<li><p>&quot;害怕了&quot;（未破 MA20 / MA60 不卖）</p></li>
+<li><p>&quot;听说明天要跌&quot;</p></li>
+<li><p>&quot;别的股票涨得更好&quot;（换股必须满足第 4 条时间止损）</p></li>
+</ul>
+<p>---</p>
+<h2 id="section-16">七、执行清单</h2>
+<h3 id="section-17">每日收盘后（15:30–16:00）</h3>
+<ul>
+<li><p><input type="checkbox" disabled> 更新所有持仓的最高价、ATR、MA20、MA60</p></li>
+<li><p><input type="checkbox" disabled> 检查是否触发卖出条件（第 1–6 条）</p></li>
+<li><p><input type="checkbox" disabled> 记录当日组合净值与回撤</p></li>
+</ul>
+<h3 id="section-18">每周五收盘后（15:30–17:00）</h3>
+<ul>
+<li><p><input type="checkbox" disabled> 检查沪深300 与 MA60 的位置关系，更新市场状态</p></li>
+<li><p><input type="checkbox" disabled> 检查下周解禁、减持公告</p></li>
+<li><p><input type="checkbox" disabled> 生成下周候选名单（满足买入前置条件的股票）</p></li>
+<li><p><input type="checkbox" disabled> 检查组合回撤是否触发 10% / 15% 风控线</p></li>
+</ul>
+<h3 id="section-19">每月末</h3>
+<ul>
+<li><p><input type="checkbox" disabled> 统计当月交易笔数、胜率、盈亏比、最大回撤</p></li>
+<li><p><input type="checkbox" disabled> 检查是否有违反规则的操作</p></li>
+<li><p><input type="checkbox" disabled> 不调整参数（参数一年只允许调整一次）</p></li>
+</ul>
+<p>---</p>
+<h2 id="section-20">八、收益预期（诚实版）</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>市况</th>
+<th>预期收益</th>
+<th>预期最大回撤</th>
+<th>说明</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">牛市（指数 &gt; MA60，广度 &gt; 50%）</td><td style="text-align:left">+30% ~ +60%</td><td style="text-align:left">-10% ~ -15%</td><td style="text-align:left">满仓运行</td></tr>
+<tr><td style="text-align:left">震荡市</td><td style="text-align:left">0% ~ +10%</td><td style="text-align:left">-10%</td><td style="text-align:left">半仓，频繁小亏</td></tr>
+<tr><td style="text-align:left">熊市</td><td style="text-align:left">-10% ~ 0%</td><td style="text-align:left">-15% ~ -20%</td><td style="text-align:left">主要靠空仓避险</td></tr>
+<tr><td style="text-align:left"><strong>5 年复合</strong></td><td style="text-align:left"><strong>10% ~ 15%</strong></td><td style="text-align:left"><strong>-20% 左右</strong></td><td style="text-align:left">长期合理预期</td></tr>
+</tbody></table></div>
+<p><strong>为什么不是 20%？</strong></p>
+<ul>
+<li><p>沪深300 过去 3.2 年年化 -0.13%，最大回撤 -21.4%</p></li>
+<li><p>即使创业板指，过去 3.2 年也只有 60.7% 的滚动一年窗口能涨 20% 以上</p></li>
+<li><p>年化 20% = 10 年 6.19 倍，属于全市场前 1% 的水平</p></li>
+<li><p>任何声称&quot;稳定 20%&quot;的系统，要么在挑最好的一段回测，要么在骗人</p></li>
+</ul>
+<p><strong>要冲 20% 必须接受的条件</strong></p>
+<ol>
+<li><p>回撤容忍度 ≥ 25%–35%</p></li>
+<li><p>持仓集中到 3–4 只（单只 25%）</p></li>
+<li><p>熊市能空仓一年以上</p></li>
+<li><p>接受个别年份亏损 10% 以上</p></li>
+</ol>
+<p>---</p>
+<h2 id="section-21">九、绝对禁止事项</h2>
+<ol>
+<li><p>❌ 融资、配资、借钱炒股</p></li>
+<li><p>❌ 买入后补仓摊平成本</p></li>
+<li><p>❌ 盘中临时改规则</p></li>
+<li><p>❌ 买入 ST 股、次新股、退市风险股</p></li>
+<li><p>❌ 一天内买卖同一只股票</p></li>
+<li><p>❌ 依据&quot;消息&quot;&quot;荐股&quot;&quot;群里的代码&quot;交易</p></li>
+<li><p>❌ 在空仓状态下因为&quot;手痒&quot;开仓</p></li>
+</ol>
+<p>---</p>
+<h2 id="section-22">十、上线验证流程</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>阶段</th>
+<th>时长</th>
+<th>要求</th>
+<th>通过标准</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">1. 模拟盘</td><td style="text-align:left">3 个月</td><td style="text-align:left">严格按规则执行，记录每笔</td><td style="text-align:left">≥ 40 笔，胜率 ≥ 40%，回撤 &lt; 20%</td></tr>
+<tr><td style="text-align:left">2. 小资金实盘</td><td style="text-align:left">3 个月</td><td style="text-align:left">用总资金 10%–20%</td><td style="text-align:left">结果与模拟盘偏差 &lt; 5 个百分点</td></tr>
+<tr><td style="text-align:left">3. 逐步放大</td><td style="text-align:left">6–12 个月</td><td style="text-align:left">每季度评估一次</td><td style="text-align:left">连续 2 个季度正收益</td></tr>
+<tr><td style="text-align:left">4. 满仓运行</td><td style="text-align:left">—</td><td style="text-align:left">前 3 阶段全部通过</td><td style="text-align:left">最大回撤始终 &lt; 20%</td></tr>
+</tbody></table></div>
+<p><strong>任何一阶段未通过，回到上一阶段，不加速。</strong></p>
+<p>---</p>
+<h2 id="section-23">十一、参数表（一年内不得修改）</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>参数</th>
+<th>取值</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">市场基准</td><td style="text-align:left">沪深300</td></tr>
+<tr><td style="text-align:left">状态均线</td><td style="text-align:left">MA60（周度更新）</td></tr>
+<tr><td style="text-align:left"><strong>开仓指数过滤</strong></td><td style="text-align:left"><strong>沪深300 &gt; MA20（每日，v1.1 新增）</strong></td></tr>
+<tr><td style="text-align:left">趋势均线</td><td style="text-align:left">MA20 / MA60 / MA120</td></tr>
+<tr><td style="text-align:left">回踩区间</td><td style="text-align:left">-1% ~ +6%（距 MA20）</td></tr>
+<tr><td style="text-align:left">60 日涨幅区间</td><td style="text-align:left">5% ~ 60%</td></tr>
+<tr><td style="text-align:left">相对强度周期</td><td style="text-align:left">20 日</td></tr>
+<tr><td style="text-align:left">缩量阈值</td><td style="text-align:left">5 日均量 × 0.8</td></tr>
+<tr><td style="text-align:left">放量阈值</td><td style="text-align:left">20 日均量 × 1.5</td></tr>
+<tr><td style="text-align:left">移动止损</td><td style="text-align:left">2.5 × ATR14</td></tr>
+<tr><td style="text-align:left">最短持有</td><td style="text-align:left">5 个交易日</td></tr>
+<tr><td style="text-align:left">最大持仓</td><td style="text-align:left">8 只</td></tr>
+<tr><td style="text-align:left">单笔风险</td><td style="text-align:left">总资金 1%</td></tr>
+<tr><td style="text-align:left">单只上限</td><td style="text-align:left">12.5%</td></tr>
+<tr><td style="text-align:left">组合回撤警戒</td><td style="text-align:left">10% 减半 / 15% 清仓</td></tr>
+</tbody></table></div>
+<p>---</p>
+<h2 id="section-24">十二、回测验证摘要（2024-02-28 ~ 2026-11-17）</h2>
+<p>完整对比见：<code>回测对比_v1_v11.md</code></p>
+<div class="table-wrap"><table><thead><tr>
+<th>指标</th>
+<th>v1.0 旧版（含多处 bug）</th>
+<th><strong>v1.1 修正版</strong></th>
+<th>沪深300</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">年化收益</td><td style="text-align:left">+31.77%</td><td style="text-align:left"><strong>+26.68%</strong></td><td style="text-align:left">+5.52%</td></tr>
+<tr><td style="text-align:left">最大回撤</td><td style="text-align:left">-27.48%</td><td style="text-align:left"><strong>-7.84%</strong></td><td style="text-align:left">—</td></tr>
+<tr><td style="text-align:left">收益/回撤</td><td style="text-align:left">1.16</td><td style="text-align:left"><strong>3.40</strong></td><td style="text-align:left">—</td></tr>
+<tr><td style="text-align:left">平均仓位</td><td style="text-align:left">55.7%</td><td style="text-align:left">29.4%</td><td style="text-align:left">—</td></tr>
+<tr><td style="text-align:left">交易笔数</td><td style="text-align:left">236</td><td style="text-align:left">145</td><td style="text-align:left">—</td></tr>
+<tr><td style="text-align:left">胜率</td><td style="text-align:left">39.0%</td><td style="text-align:left">41.4%</td><td style="text-align:left">—</td></tr>
+<tr><td style="text-align:left">盈亏比</td><td style="text-align:left">2.79</td><td style="text-align:left">3.98</td><td style="text-align:left">—</td></tr>
+<tr><td style="text-align:left">利润因子</td><td style="text-align:left">1.78</td><td style="text-align:left">2.81</td><td style="text-align:left">—</td></tr>
+<tr><td style="text-align:left">最大单笔亏损</td><td style="text-align:left">-22.1%</td><td style="text-align:left"><strong>-15.2%</strong></td><td style="text-align:left">—</td></tr>
+<tr><td style="text-align:left">跌破MA60离场</td><td style="text-align:left">35 笔</td><td style="text-align:left">10 笔</td><td style="text-align:left">—</td></tr>
+</tbody></table></div>
+<p><strong>v1.1 修正了 7 处</strong></p>
+<ol>
+<li><p>&quot;MA60 向上&quot;切片错误（4 天数据除以 60）。</p></li>
+<li><p>指数价格取成开盘价（应为收盘价）。</p></li>
+<li><p>ATR 周期算成 15 天（应为 14 天）。</p></li>
+<li><p>入场 ATR 取到了执行日收盘（未来数据）。</p></li>
+<li><p>仓位未按 1% 风险规则执行，且有一次&quot;股数当金额&quot;的双重除法。</p></li>
+<li><p>缺少组合回撤熔断（-10% 减半、-15% 清仓）。</p></li>
+<li><p>金额四舍五入到元导致现金流对不上。</p></li>
+</ol>
+<p><strong>效果</strong>：修正后 145 笔交易、年化 +26.68%、最大回撤 <strong>-7.84%</strong>，规则违规 0 笔、现金流逐笔对齐到分。修正仓位风控后年化从虚高的 41% 回落到 26.7%，回撤从 -12.9% 降到 -7.8%。</p>
+<p><strong>重要提示</strong>：26.68% 仍受幸存者偏差影响（标的池同期等权上涨约 77%），不能当作未来预期。长期按 <strong>10%–15%</strong> 规划，好年份争取 20% 以上。</p>
+<p>---</p>
+<h2 id="section-25">十三、免责声明</h2>
+<p>本系统为个人交易纪律文件，不构成任何投资建议。所有收益率均为历史数据推演或合理预期，不代表未来表现。股市有风险，入市需谨慎，盈亏自负。</p></main></div></body></html>

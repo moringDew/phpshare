@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>趋势跟随交易系统 v1.1 —— 文件说明</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f5f8;color:#243247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}
+.layout{max-width:1420px;margin:auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding:40px 28px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}nav strong{display:block;margin-bottom:16px}nav a{display:block;padding:7px 0;color:#52627a;text-decoration:none}a:hover{color:#1768ad}
+main{min-width:0;padding:36px 44px;background:white;border:1px solid #e1e6ee;border-radius:12px}h1{font-size:32px;margin:0 0 24px}h2{font-size:23px;margin:44px 0 18px;border-bottom:1px solid #e1e6ee;padding-bottom:10px}h3{font-size:18px;margin-top:28px}h1,h2,h3{color:#142a43;scroll-margin-top:24px}
+blockquote{margin:0;padding:16px 20px;background:#f0f6fc;border-left:4px solid #4389bf;color:#52627a}p{margin:12px 0}li>p{margin:5px 0}li{margin:6px 0}ul,ol{padding-left:26px}
+code{font:0.88em/1.6 Consolas,monospace;background:#f0f3f7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:20px 0;padding-bottom:6px}.table-hint{font-size:13px;color:#69788c;margin:12px 0 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #e0e6ee;padding:11px 13px;text-align:left}th{background:#edf3f9;white-space:nowrap}tbody tr:nth-child(even){background:#f8fafc}td code{white-space:normal}input{accent-color:#267bb7}.source{font-size:13px;color:#69788c;margin-bottom:24px}.source a{color:#1768ad}
+table.wide{width:max-content;min-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
+pre{padding:18px;background:#f0f3f7;border-radius:8px;overflow-x:auto;line-height:1.6}pre code{padding:0;overflow-wrap:normal}img{max-width:100%;height:auto}
+@media(max-width:900px){.layout{display:block;padding:16px}nav{position:static;margin-bottom:22px}nav a{display:inline-block;margin-right:16px}main{padding:24px 18px}h1{font-size:26px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav,.source{display:none}main{border:0;padding:0}.table-wrap{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}
+</style></head><body><div class="layout"><nav aria-label="目录"><strong>趋势跟随交易系统 v1.1 —— 文件说明 · 目录</strong><a href="#section-1">一、先看这三份</a><a href="#section-2">二、目录结构</a><a href="#section-3">三、四张数据表怎么分工</a><a href="#section-4">四、v1.1 最终回测结果</a><a href="#section-5">五、必须记住的三条限制</a><a href="#section-6">六、建议的上线顺序</a><a href="#section-7">七、如何重跑与审计</a></nav><main><div class="source">离线阅读版 · 来源：<a href="../../md/%E4%BA%A4%E6%98%93%E7%B3%BB%E7%BB%9Fv1.1/%E8%AF%B4%E6%98%8E_%E4%BB%8E%E8%BF%99%E9%87%8C%E5%BC%80%E5%A7%8B.md">说明_从这里开始.md</a></div><p class="source"><a href="../%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95.html">全部文档目录</a></p><h1 id="section-0">趋势跟随交易系统 v1.1 —— 文件说明</h1>
+<p><strong>整理日期</strong>：2026-11-17 <strong>回测区间</strong>：2024-02-28 ~ 2026-11-17（660 个交易日，约 2.6 年）</p>
+<p>---</p>
+<h2 id="section-1">一、先看这三份</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>顺序</th>
+<th>文件</th>
+<th>作用</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">1</td><td style="text-align:left"><code>交易规则_趋势跟随系统_v1.1_2026-11-17.md</code></td><td style="text-align:left"><strong>怎么做</strong>：买入、持有、卖出、仓位、风控的完整规则</td></tr>
+<tr><td style="text-align:left">2</td><td style="text-align:left"><code>回测对比_v1_v11.md</code></td><td style="text-align:left"><strong>修了什么</strong>：7 处问题的修复过程与效果对比</td></tr>
+<tr><td style="text-align:left">3</td><td style="text-align:left"><code>交易记录规范_2026-11-17.md</code></td><td style="text-align:left"><strong>怎么记录</strong>：台账字段、资金计算、对账方法、复盘节奏</td></tr>
+</tbody></table></div>
+<p>---</p>
+<h2 id="section-2">二、目录结构</h2>
+<pre><code class="language-">quant-platform/
+├── docs/md/交易系统v1.1/
+│   ├── 说明_从这里开始.md
+│   ├── 交易规则_趋势跟随系统_v1.1_2026-11-17.md
+│   ├── 回测对比_v1_v11.md
+│   ├── 回测报告_趋势系统v1.1_2024-2026.md
+│   └── 交易记录规范_2026-11-17.md
+├── docs/html/交易系统v1.1/          ← 对应的 HTML 阅读版
+├── docs/md/个股分析/                ← 剑桥科技、松发股份分析
+├── output/交易系统v1.1/
+│   ├── 交易记录_回测_v11.csv
+│   ├── 资金曲线_回测_v11.csv
+│   ├── 每日持仓_回测_v11.csv
+│   ├── 每日交易流水_回测_v11.csv
+│   ├── 交易记录模板.csv
+│   ├── 回测_趋势系统v11.txt          ← 回测摘要
+│   ├── 审计报告_v11.txt
+│   └── universe_v11.json            ← 冻结的标的池
+└── scripts/
+    ├── backtest_trend_v11.py        ← v1.1 回测脚本
+    ├── audit_trend_v11.py           ← 审计脚本
+    └── analyze_trades.py</code></pre>
+<p>---</p>
+<h2 id="section-3">三、四张数据表怎么分工</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>文件</th>
+<th>回答什么问题</th>
+<th>一行代表</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left"><code>每日交易流水</code></td><td style="text-align:left">今天买卖了什么</td><td style="text-align:left">一笔成交</td></tr>
+<tr><td style="text-align:left"><code>每日持仓</code></td><td style="text-align:left">今天还持有什么</td><td style="text-align:left">一只持仓</td></tr>
+<tr><td style="text-align:left"><code>交易记录</code></td><td style="text-align:left">这笔从头到尾赚亏多少</td><td style="text-align:left">一次完整买卖</td></tr>
+<tr><td style="text-align:left"><code>资金曲线</code></td><td style="text-align:left">账户净值怎么走的</td><td style="text-align:left">一天</td></tr>
+</tbody></table></div>
+<p>所有 CSV 均为 UTF-8 BOM 编码，Excel 双击打开中文不乱码；金额按分结算，可逐笔对账。</p>
+<p>---</p>
+<h2 id="section-4">四、v1.1 最终回测结果</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>指标</th>
+<th>数值</th>
+</tr></thead><tbody>
+<tr><td style="text-align:left">年化收益</td><td style="text-align:left">+26.68%</td></tr>
+<tr><td style="text-align:left">最大回撤</td><td style="text-align:left"><strong>-7.84%</strong></td></tr>
+<tr><td style="text-align:left">收益/回撤</td><td style="text-align:left">3.40</td></tr>
+<tr><td style="text-align:left">交易笔数</td><td style="text-align:left">145</td></tr>
+<tr><td style="text-align:left">胜率</td><td style="text-align:left">41.4%</td></tr>
+<tr><td style="text-align:left">盈亏比</td><td style="text-align:left">3.98</td></tr>
+<tr><td style="text-align:left">利润因子</td><td style="text-align:left">2.81</td></tr>
+<tr><td style="text-align:left">平均仓位</td><td style="text-align:left">29.4%</td></tr>
+<tr><td style="text-align:left">最大单笔亏损</td><td style="text-align:left">-15.2%</td></tr>
+<tr><td style="text-align:left">规则违规</td><td style="text-align:left"><strong>0 笔</strong></td></tr>
+<tr><td style="text-align:left">现金流偏差</td><td style="text-align:left"><strong>0 元</strong></td></tr>
+</tbody></table></div>
+<p><strong>结构特征</strong>：41% 的胜率，靠近 4 倍的盈亏比赚钱。十次里会亏六次，利润来自少数持有 15 天以上的大牛股。</p>
+<p>---</p>
+<h2 id="section-5">五、必须记住的三条限制</h2>
+<ol>
+<li><p><strong>结果对实现细节高度敏感</strong>：修正过程中，&quot;开盘价改收盘价&quot;曾让年化从 30.6% 跳到 41.1%，加入风险仓位后又回落到 26.7%。<strong>26.68% 不是稳定收益能力。</strong></p></li>
+<li><p><strong>幸存者偏差</strong>：标的池是&quot;当前市值≥150亿&quot;，池子同期等权上涨 76.3%（年化约 24.0%）。绝对收益不能当作未来预期。</p></li>
+<li><p><strong>合理预期是 10%–15%</strong>，好年份争取 20% 以上，熊市会亏 10% 左右；-7.84% 是回测回撤，实盘请按 -20% 做心理准备。</p></li>
+</ol>
+<p>---</p>
+<h2 id="section-6">六、建议的上线顺序</h2>
+<ol>
+<li><p>读透规则文档，特别是&quot;卖出规则&quot;和&quot;绝对禁止事项&quot;</p></li>
+<li><p>模拟盘 3 个月，至少 40 笔，用 <code>交易记录模板.csv</code> 逐笔记录</p></li>
+<li><p>统计胜率、盈亏比、违规次数</p></li>
+<li><p>达标后用 10%–20% 资金实盘 3 个月</p></li>
+<li><p>连续 2 个季度正收益后再逐步放大</p></li>
+</ol>
+<p><strong>不要因为回测 26.68% 就直接上真金白银。</strong> 回测没有情绪，实盘有。</p>
+<p>---</p>
+<h2 id="section-7">七、如何重跑与审计</h2>
+<pre><code class="language-bash">cd quant-platform
+python scripts/backtest_trend_v11.py   # 重跑回测
+python scripts/audit_trend_v11.py      # 审计现金流、规则合规、仓位风险</code></pre>
+<p>历史数据已缓存在 <code>output/交易系统v1.1/klines_cache_800.json</code>，标的池已冻结在 <code>universe_v11.json</code>，重跑结果一致。</p>
+<p>---</p>
+<blockquote>本文件夹内容为个人研究与交易纪律文件，不构成投资建议。回测收益不代表未来表现，盈亏自负。</blockquote></main></div></body></html>
